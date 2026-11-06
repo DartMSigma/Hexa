@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hexa: color picker, wheel, names and contrast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav aria-label="Tools">
+<b><i></i>Hexa</b>
+<button data-v="picker">Picker</button><button data-v="palettes">Palettes</button><button data-v="wheel">Wheel</button><button data-v="image">Image</button><button data-v="names">Names</button><button data-v="contrast">Contrast</button>
+<span class="sp"></span>
+<button id="theme" aria-label="Toggle light or dark theme">Theme</button>
+</nav>
+
+<header class="stage">
+<h1 id="big">F54927</h1>
+<p id="lede">Pick a color to get its Hex, RGB, HSL and OKLCH codes.</p>
+<div class="row"><button class="btn" id="rand">Random color</button><button class="btn" id="copyhex">Copy hex</button><button class="btn" id="exp">Copy palette as CSS</button></div>
+</header>
+
+<main>
+<section data-s="picker">
+<div class="grid">
+<div>
+<h2>Color picker</h2><p class="sub">Drag in the square for saturation and brightness, then set the hue.</p>
+<div id="sv" role="application" aria-label="Saturation and brightness"><i></i></div>
+<input type="range" id="hue" min="0" max="360" aria-label="Hue">
+</div>
+<div>
+<h2>Codes</h2><p class="sub">Select any row to copy it.</p>
+<div class="vals" id="vals"></div>
+</div>
+</div>
+</section>
+
+<section data-s="wheel" hidden>
+<h2>Color wheel</h2><p class="sub">Click the wheel to set hue and saturation. Use the slider to change lightness.</p>
+<div class="wrap"><canvas id="wheel" width="360" height="360"></canvas></div>
+<label class="lab wheel-lightness">Lightness <span id="wl">50%</span></label>
+<input type="range" id="wlight" class="wheel-lightness-range" min="5" max="95" value="50" aria-label="Lightness">
+</section>
+
+<section data-s="image" hidden>
+<h2>Image color picker</h2><p class="sub">Open a photo, click anywhere on it to pick a color, or use the colors we found in it.</p>
+<div class="field"><input type="file" id="file" accept="image/*" aria-label="Choose an image"></div>
+<canvas id="imgc" class="image-canvas" width="10" height="10"></canvas>
+<div class="sw image-found" id="found"></div>
+</section>
+
+<section data-s="palettes" hidden>
+<h2>Palettes from one color</h2><p class="sub">Choose a color here, in the picker, or on the wheel. Every palette follows the same selection.</p>
+<div class="palette-controls">
+<div class="palette-panel">
+<h3>Choose your base color</h3><p class="sub">Enter a hex code or use the color well</p>
+<div class="palette-base-field"><input type="color" id="pcol" aria-label="Choose base color"><input type="text" id="pbase" maxlength="7" placeholder="#F54927" aria-label="Base hex color" aria-describedby="base-status" autocomplete="off" spellcheck="false"></div>
+<span class="helper" id="base-status">Try a color code such as #4A90A4</span>
+<div class="palette-actions"><button class="btn2" id="prand" type="button">Random base</button><button class="btn2" id="pshuf" type="button">Shuffle variations</button></div>
+</div>
+<div class="palette-panel">
+<h3>Generate with Gemini</h3><p class="sub">Add a mood and your Google AI Studio key. It is sent directly to Google and is not saved by this page.</p>
+<div class="moods" id="moods" aria-label="Suggested moods"><button class="btn2" type="button" aria-pressed="false">Calm</button><button class="btn2" type="button" aria-pressed="false">Luxury</button><button class="btn2" type="button" aria-pressed="false">Bold</button><button class="btn2" type="button" aria-pressed="false">Playful</button><button class="btn2" type="button" aria-pressed="false">Earthy</button><button class="btn2" type="button" aria-pressed="false">Futuristic</button></div>
+<div class="gemini-form">
+<label for="gm">Palette mood<input type="text" id="gm" placeholder="For example, calm luxury spa" autocomplete="off"></label>
+<label for="gk">Gemini API key<span class="key-control"><input type="password" id="gk" autocomplete="off" spellcheck="false" aria-describedby="key-help"><button class="btn2" id="keytoggle" type="button" aria-pressed="false">Show</button></span></label>
+<span class="helper" id="key-help">The key stays in this tab until you close it. Do not embed it in a public copy of this page.</span>
+<div class="gemini-actions"><button class="btn2" id="gb" type="button">Generate palettes</button><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Get an API key</a></div>
+</div>
+</div>
+</div>
+<h2>Ready-made palettes</h2><p class="sub">Six color directions, generated instantly from your base color. Click a swatch to copy its hex.</p>
+<div class="pgrid" id="pgrid"></div>
+<p class="sub" id="gs" role="status" aria-live="polite"></p><div class="pgrid" id="aip"></div>
+</section>
+
+<section data-s="names" hidden>
+<h2>HTML color names</h2><p class="sub">The 140 named CSS colors. Select one to use it.</p>
+<div class="field"><input type="search" id="q" placeholder="Search names or hex" aria-label="Search color names"></div>
+<div class="names" id="names"></div>
+</section>
+
+<section data-s="contrast" hidden>
+<h2>Contrast checker</h2><p class="sub">Check that text is readable against its background (WCAG 2.2).</p>
+<div class="field">
+<input type="text" id="fg" value="#FFFFFF" aria-label="Text color"><button class="btn text-color-btn" id="fgp">Use picked as text</button>
+<input type="text" id="bg" value="#F54927" aria-label="Background color"><button class="btn text-color-btn" id="bgp">Use picked as background</button>
+</div>
+<div class="grid">
+<div class="cc" id="ccs"><strong>Readable headline</strong>Body text sits on this background. Small print should still be easy to read.</div>
+<div><div class="score" id="ratio">3.6</div><div class="badges" id="badges"></div></div>
+</div>
+</section>
+
+<section data-s="pal">
+<h2>Harmonies</h2><p class="sub">Colors that work with your pick.</p>
+<div class="row"><select id="harm" aria-label="Harmony type">
+<option value="comp">Complementary</option><option value="analog">Analogous</option><option value="triad">Triadic</option><option value="split">Split complementary</option><option value="tetra">Tetradic</option><option value="mono">Monochromatic</option></select></div>
+<div class="sw harmony-swatches" id="hs"></div>
+<div class="lab">Shades <span>mixed with black</span></div><div class="sw" id="sh"></div>
+<div class="lab">Tints <span>mixed with white</span></div><div class="sw" id="ti"></div>
+<div class="lab">Tones <span>mixed with gray</span></div><div class="sw" id="to"></div>
+</section>
+</main>
+<div id="toast" role="status"></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+let H=11,S=84,V=96,WL=50,view='picker';
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function hsv2rgb(h,s,v){s/=100;v/=100;const f=n=>{const k=(n+h/60)%6;return v-v*s*Math.max(0,Math.min(k,4-k,1))};return[f(5),f(3),f(1)].map(x=>Math.round(x*255))}
+function rgb2hsv(r,g,b){r/=255;g/=255;b/=255;const m=Math.max(r,g,b),n=Math.min(r,g,b),d=m-n;let h=0;if(d){h=m==r?((g-b)/d)%6:m==g?(b-r)/d+2:(r-g)/d+4;h*=60;if(h<0)h+=360}return[h,m?d/m*100:0,m*100]}
+function hsl2rgb(h,s,l){h=((h%360)+360)%360;s/=100;l/=100;const a=s*Math.min(l,1-l),f=n=>{const k=(n+h/30)%12;return l-a*Math.max(-1,Math.min(k-3,9-k,1))};return[f(0),f(8),f(4)].map(x=>Math.round(x*255))}
+function rgb2hsl(r,g,b){const[h,s,v]=rgb2hsv(r,g,b),l=v*(1-s/200);return[h,(l==0||l==100)?0:(v-l)/Math.min(l,100-l)*100,l]}
+const hex=(r,g,b)=>'#'+[r,g,b].map(x=>clamp(Math.round(x),0,255).toString(16).padStart(2,'0')).join('').toUpperCase();
+function parse(t){t=t.trim().replace('#','');if(t.length==3)t=[...t].map(c=>c+c).join('');return /^[0-9a-f]{6}$/i.test(t)?[0,2,4].map(i=>parseInt(t.substr(i,2),16)):null}
+function oklch(r,g,b){const c=x=>{x/=255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4},R=c(r),G=c(g),B=c(b),
+l=Math.cbrt(.4122214708*R+.5363325363*G+.0514459929*B),m=Math.cbrt(.2119034982*R+.6806995451*G+.1073969566*B),s=Math.cbrt(.0883024619*R+.2817188376*G+.6299787005*B),
+L=.2104542553*l+.793617785*m-.0040720468*s,a=1.9779984951*l-2.428592205*m+.4505937099*s,k=.0259040371*l+.7827717662*m-.808675766*s;
+let h=Math.atan2(k,a)*180/Math.PI;if(h<0)h+=360;return[L*100,Math.hypot(a,k),h]}
+function lum(r,g,b){const c=x=>{x/=255;return x<=.03928?x/12.92:((x+.055)/1.055)**2.4};return .2126*c(r)+.7152*c(g)+.0722*c(b)}
+function ratio(a,b){const x=lum(...a),y=lum(...b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
+const cur=()=>hsv2rgb(H,S,V);
+function setRGB(rgb){[H,S,V]=rgb2hsv(...rgb);render()}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1400)}
+function copy(t){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Copied '+t),()=>toast('Copy blocked. Select the text instead.'))}
+
+function sw(el,cols){el.innerHTML='';cols.forEach(c=>{const h=hex(...c),b=document.createElement('button');b.style.background=h;b.style.color=ratio(c,[255,255,255])>3?'#fff':'#15171c';b.textContent=h.slice(1);b.title='Use '+h;b.onclick=()=>setRGB(c);el.append(b)})}
+function mix(a,b,t){return a.map((x,i)=>x+(b[i]-x)*t)}
+function harmony(){const[h,s,l]=rgb2hsl(...cur()),t=$('#harm').value;
+if(t=='mono')return[20,35,50,65,80].map(L=>hsl2rgb(h,s,L));
+const o={comp:[0,180],analog:[-30,0,30],triad:[0,120,240],split:[0,150,210],tetra:[0,90,180,270]}[t];return o.map(d=>hsl2rgb(h+d,s,l))}
+
+function render(){
+const rgb=cur(),hx=hex(...rgb),[,sl,l]=rgb2hsl(...rgb),hsl=rgb2hsl(...rgb),ok=oklch(...rgb);
+const on=ratio(rgb,[255,255,255])>=3?'#fff':'#15171c';
+const r=document.documentElement.style;r.setProperty('--c',hx);r.setProperty('--on',on);
+$('#big').textContent=hx.slice(1);document.title='#'+hx.slice(1)+' · Hexa';
+$('#lede').textContent=`rgb(${rgb}) · hsl(${hsl.map(Math.round)[0]}, ${Math.round(hsl[1])}%, ${Math.round(hsl[2])}%)`.replace(/ · /,' and ');
+$('#sv').style.background=`linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,hsl(${H} 100% 50%))`;
+const i=$('#sv i');i.style.left=S+'%';i.style.top=(100-V)+'%';i.style.background=hx;$('#hue').value=H;
+const vs=[['Hex',hx],['RGB',`rgb(${rgb.join(', ')})`],['HSL',`hsl(${Math.round(hsl[0])}, ${Math.round(hsl[1])}%, ${Math.round(hsl[2])}%)`],['OKLCH',`oklch(${ok[0].toFixed(1)}% ${ok[1].toFixed(3)} ${ok[2].toFixed(0)})`],['CSS variable',`--color: ${hx};`]];
+const box=$('#vals');if(!box.dataset.b){box.dataset.b=1;box.innerHTML=`<label class="val in"><span>Type a hex code</span><input id="hin" maxlength="7" aria-label="Hex code"></label>`+vs.map(()=>`<button class="val"><span></span><code></code></button>`).join('')}
+const hin=$('#hin');if(document.activeElement!==hin)hin.value=hx;
+hin.oninput=()=>{const p=parse(hin.value);if(p){[H,S,V]=rgb2hsv(...p);render()}};
+$$('#vals button').forEach((b,k)=>{b.children[0].textContent=vs[k][0];b.children[1].textContent=vs[k][1];b.onclick=()=>copy(vs[k][1])});
+sw($('#hs'),harmony());
+const steps=[.1,.2,.3,.4,.5,.6,.7,.8,.9];
+sw($('#sh'),[...steps].reverse().map(t=>mix(rgb,[0,0,0],t)));
+sw($('#ti'),steps.map(t=>mix(rgb,[255,255,255],t)));
+sw($('#to'),steps.map(t=>mix(rgb,[128,128,128],t)));
+if(view=='wheel')drawWheel();
+if(view=='contrast')contrast();
+if(view=='palettes')pals();
+}
+
+/* picker events */
+const sv=$('#sv');function svmove(e){const b=sv.getBoundingClientRect();S=clamp((e.clientX-b.left)/b.width*100,0,100);V=100-clamp((e.clientY-b.top)/b.height*100,0,100);render()}
+sv.onpointerdown=e=>{sv.setPointerCapture(e.pointerId);svmove(e);sv.onpointermove=svmove};sv.onpointerup=()=>sv.onpointermove=null;
+$('#hue').oninput=e=>{H=+e.target.value;render()};
+$('#harm').onchange=render;
+
+/* wheel */
+const wc=$('#wheel'),wx=wc.getContext('2d');
+function drawWheel(){const n=wc.width,d=wx.createImageData(n,n),R=n/2;
+for(let y=0;y<n;y++)for(let x=0;x<n;x++){const dx=x-R,dy=y-R,rr=Math.hypot(dx,dy),k=(y*n+x)*4;if(rr>R){continue}
+let a=Math.atan2(dy,dx)*180/Math.PI+90;const c=hsl2rgb(a,rr/R*100,WL);d.data[k]=c[0];d.data[k+1]=c[1];d.data[k+2]=c[2];d.data[k+3]=255}
+wx.putImageData(d,0,0);const[h,s]=rgb2hsl(...cur());const set=[...harmony()].map(c=>rgb2hsl(...c)[0]);
+set.forEach((hh,i)=>{const ang=(hh-90)*Math.PI/180,rad=s/100*R;wx.beginPath();wx.arc(R+Math.cos(ang)*rad,R+Math.sin(ang)*rad,i?9:13,0,7);wx.fillStyle=hex(...hsl2rgb(hh,s,WL));wx.fill();wx.lineWidth=3;wx.strokeStyle='#fff';wx.stroke()});$('#wl').textContent=WL+'%'}
+function wpick(e){const b=wc.getBoundingClientRect(),R=b.width/2,dx=e.clientX-b.left-R,dy=e.clientY-b.top-R;const s=clamp(Math.hypot(dx,dy)/R*100,0,100),h=Math.atan2(dy,dx)*180/Math.PI+90;setRGB(hsl2rgb(h,s,WL))}
+wc.onpointerdown=e=>{wc.setPointerCapture(e.pointerId);wpick(e);wc.onpointermove=wpick};wc.onpointerup=()=>wc.onpointermove=null;
+$('#wlight').oninput=e=>{WL=+e.target.value;const[h,s]=rgb2hsl(...cur());setRGB(hsl2rgb(h,s,WL))};
+
+/* image */
+const ic=$('#imgc'),ix=ic.getContext('2d',{willReadFrequently:true});
+$('#file').onchange=e=>{const f=e.target.files[0];if(!f)return;const img=new Image();img.onload=()=>{const k=Math.min(1,720/img.width);ic.width=img.width*k;ic.height=img.height*k;ic.style.display='block';ix.drawImage(img,0,0,ic.width,ic.height);found();URL.revokeObjectURL(img.src)};img.src=URL.createObjectURL(f)};
+ic.onclick=e=>{const b=ic.getBoundingClientRect(),p=ix.getImageData((e.clientX-b.left)*ic.width/b.width,(e.clientY-b.top)*ic.height/b.height,1,1).data;setRGB([p[0],p[1],p[2]])};
+function found(){const d=ix.getImageData(0,0,ic.width,ic.height).data,m={};for(let i=0;i<d.length;i+=16){const k=[d[i]>>5,d[i+1]>>5,d[i+2]>>5].join();(m[k]=m[k]||[0,0,0,0]);m[k][0]+=d[i];m[k][1]+=d[i+1];m[k][2]+=d[i+2];m[k][3]++}
+const top=Object.values(m).sort((a,b)=>b[3]-a[3]).map(v=>[v[0]/v[3],v[1]/v[3],v[2]/v[3]].map(Math.round)),out=[];
+for(const c of top){if(out.every(o=>Math.hypot(o[0]-c[0],o[1]-c[1],o[2]-c[2])>60))out.push(c);if(out.length==6)break}sw($('#found'),out)}
+
+/* names */
+const NM='aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkturquoise darkviolet deeppink deepskyblue dimgray dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen lightpink lightsalmon lightseagreen lightskyblue lightslategray lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen'.split(' ');
+const cx=document.createElement('canvas').getContext('2d');
+const NL=NM.map(n=>{cx.fillStyle=n;return[n,cx.fillStyle.toUpperCase()]});
+function names(){const q=$('#q').value.toLowerCase().replace('#',''),b=$('#names');b.innerHTML='';NL.filter(([n,h])=>n.includes(q)||h.toLowerCase().includes(q)).forEach(([n,h])=>{const e=document.createElement('button');e.innerHTML=`<i style="background:${h}"></i><div>${n}<small>${h}</small></div>`;e.onclick=()=>setRGB(parse(h));b.append(e)});if(!b.children.length)b.textContent='No colors match. Try a shorter name or a hex code.'}
+$('#q').oninput=names;names();
+
+/* contrast */
+function contrast(){const f=parse($('#fg').value),g=parse($('#bg').value);if(!f||!g){$('#ratio').textContent='?';$('#badges').textContent='Enter two six-digit hex codes.';return}
+const r=ratio(f,g);$('#ratio').textContent=r.toFixed(2)+':1';const c=$('#ccs');c.style.background=hex(...g);c.style.color=hex(...f);
+const t=[['Normal text AA',4.5],['Normal text AAA',7],['Large text AA',3],['UI components AA',3]];
+$('#badges').innerHTML=t.map(([n,m])=>`<span class="${r>=m?'ok':'no'}">${n}: ${r>=m?'Pass':'Fail'}</span>`).join('')}
+$('#fg').oninput=$('#bg').oninput=contrast;
+$('#fgp').onclick=()=>{$('#fg').value=hex(...cur());contrast()};$('#bgp').onclick=()=>{$('#bg').value=hex(...cur());contrast()};
+
+/* palettes */
+const PN=[['Blush Petal','Coral Ember','Garnet Red','Oxblood'],['Apricot Cream','Tangerine Glow','Burnt Copper','Roasted Chestnut'],['Champagne','Saffron Gold','Antique Brass','Dark Umber'],['Pale Pistachio','Chartreuse Leaf','Moss Green','Forest Olive'],['Mint Whisper','Emerald','Pine Green','Evergreen'],['Sea Foam','Jade','Malachite','Deep Spruce'],['Misty Aqua','Caribbean Teal','Peacock Blue','Deep Teal'],['Sky Haze','Cerulean','Ocean Blue','Navy Tide'],['Frost Blue','Cobalt','Sapphire','Midnight Blue'],['Lilac Mist','Amethyst','Royal Plum','Deep Aubergine'],['Orchid Pink','Fuchsia Glow','Mulberry','Dark Plum'],['Rose Quartz','Raspberry','Wine Rose','Burgundy']],GN=['Pearl','Silver Mist','Graphite','Onyx'];
+function nameFor(c){const[h,s,l]=rgb2hsl(...c),t=l>80?0:l>50?1:l>30?2:3;return s<12?GN[t]:PN[Math.floor(((h+15)%360)/30)][t]}
+const P=(h,s,l)=>hsl2rgb(h,clamp(s,0,100),clamp(l,0,100));
+const STY=[['Tonal depth',(h,s,l)=>[P(h,s*.6+10,93),P(h,s,clamp(l,38,52)),P(h,s*.9,28),P(h,s*.8,15)]],
+['Analogous glow',(h,s,l)=>[P(h-30,s*.8,90),P(h-12,s,clamp(l,42,58)),P(h+12,s,36),P(h+30,s*.9,18)]],
+['Complementary contrast',(h,s,l)=>[P(h,s*.5+10,93),P(h,s,clamp(l,40,55)),P(h+180,s*.8,42),P(h+180,s*.7,16)]],
+['Triadic balance',(h,s,l)=>[P(h,s*.5,92),P(h,s,clamp(l,40,55)),P(h+120,s*.75,36),P(h+240,s*.7,20)]],
+['Soft pastel',(h,s,l)=>[P(h,60,93),P(h+20,55,84),P(h-20,50,72),P(h,30,38)]],
+['Warm neutrals',(h,s,l)=>[P(h,14,94),P(h,26,72),P(h,s*.45,36),P(h,s*.35,14)]]];
+let PJ=[0,0];
+function pcard(title,cols){const d=document.createElement('article');d.className='pc';const b=document.createElement('div');b.className='pb';
+cols.forEach(([c,n])=>{const x=hex(...c),e=document.createElement('button'),name=document.createElement('b'),code=document.createElement('small');e.type='button';e.style.background=x;e.style.color=ratio(c,[255,255,255])>=4.5?'#fff':'#15171c';name.textContent=n;code.textContent='HEX: '+x;e.append(name,code);e.title='Copy '+x;e.onclick=()=>copy(x);b.append(e)});
+const f=document.createElement('div');f.className='pf';const label=document.createElement('span'),copyBtn=document.createElement('button');label.textContent=title;copyBtn.type='button';copyBtn.className='btn2';copyBtn.textContent='Copy CSS';
+copyBtn.onclick=()=>copy(':root{\n'+cols.map(([c,n])=>`  --${String(n||'color').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'color'}: ${hex(...c)};`).join('\n')+'\n}');f.append(label,copyBtn);d.append(b,f);return d}
+function pals(){const[h,s,l]=rgb2hsl(...cur()),pb=$('#pbase');$('#pcol').value=hex(...cur());if(document.activeElement!==pb)pb.value=hex(...cur());
+const g=$('#pgrid');g.innerHTML='';STY.forEach(([t,fn])=>g.append(pcard(t,fn(h+PJ[0],clamp(s+PJ[1],8,100),l).map(c=>[c,nameFor(c)]))))}
+$('#pbase').oninput=e=>{const p=parse(e.target.value),status=$('#base-status');if(p){e.target.setAttribute('aria-invalid','false');status.textContent='';status.classList.remove('error');setRGB(p)}else{e.target.setAttribute('aria-invalid','true');status.textContent='Enter a valid 3- or 6-digit hex code';status.classList.add('error')}};
+$('#pbase').onblur=e=>{if(!parse(e.target.value)){e.target.value=hex(...cur());e.target.setAttribute('aria-invalid','false');$('#base-status').textContent='Try a color code such as #4A90A4';$('#base-status').classList.remove('error')}};
+$('#pshuf').onclick=()=>{PJ=[(Math.random()-.5)*30,(Math.random()-.5)*24];pals()};
+function readGeminiPalettes(payload,base){if(!payload||typeof payload!=='object')throw new Error('Gemini returned an unreadable response.');
+const text=payload.candidates&&payload.candidates[0]&&payload.candidates[0].content&&payload.candidates[0].content.parts&&payload.candidates[0].content.parts.map(part=>part.text||'').join('').trim();
+if(!text)throw new Error(payload.promptFeedback&&payload.promptFeedback.blockReason?'The request was blocked by Gemini. Try a different mood.':'Gemini returned no palette data.');
+let data;try{data=JSON.parse(text)}catch{throw new Error('Gemini returned invalid palette data. Try generating again.')}
+if(!Array.isArray(data)||data.length!==4)throw new Error('Gemini did not return exactly four palettes. Try generating again.');
+return data.map((palette,index)=>{if(!Array.isArray(palette.colors)||palette.colors.length!==4)throw new Error(`Palette ${index+1} did not contain exactly four colors.`);
+const colors=palette.colors.map(color=>{const rgb=parse(String(color.hex||'')),name=typeof color.name==='string'?color.name.trim():'';if(!rgb||!name)throw new Error(`Palette ${index+1} included an invalid color.`);return[rgb,name]});
+if(!colors.some(([rgb])=>hex(...rgb)===base))throw new Error(`Palette ${index+1} did not include your base color ${base}. Generate again to keep your color in every palette.`);
+return{title:typeof palette.title==='string'&&palette.title.trim()?palette.title.trim():`Gemini palette ${index+1}`,colors}})}
+$('#gb').onclick=async()=>{const key=$('#gk').value.trim(),st=$('#gs'),out=$('#aip'),button=$('#gb');
+if(!key){st.textContent='Add your Gemini API key to generate palettes.';$('#gk').focus();return}
+const mood=$('#gm').value.trim()||'premium and modern',base=hex(...cur());button.disabled=true;st.textContent=`Generating palettes for ${base}…`;out.replaceChildren();
+try{const response=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({contents:[{parts:[{text:`Create exactly 4 distinct, polished color palettes for the mood "${mood}". The user's chosen base color is ${base}. Each palette must contain exactly 4 colors, include the exact base color ${base} as one of its colors, and keep the other colors harmonious with it. Give the other colors evocative, concise names. Return only JSON matching the requested schema.`}]}],generationConfig:{responseMimeType:'application/json',responseSchema:{type:'ARRAY',items:{type:'OBJECT',properties:{title:{type:'STRING'},colors:{type:'ARRAY',items:{type:'OBJECT',properties:{name:{type:'STRING'},hex:{type:'STRING'}},required:['name','hex']}}},required:['title','colors']}}}})});
+let payload;try{payload=await response.json()}catch{throw new Error(`Gemini returned an unreadable response (HTTP ${response.status}).`)}
+if(!response.ok)throw new Error(payload.error&&payload.error.message?`Gemini error (${response.status}): ${payload.error.message}`:`Gemini request failed (HTTP ${response.status}).`);
+const palettes=readGeminiPalettes(payload,base);palettes.forEach(palette=>out.append(pcard(palette.title,palette.colors)));st.textContent=`Gemini made ${palettes.length} palettes from ${base} for “${mood}”.`}
+catch(error){st.textContent=error instanceof TypeError?'Could not reach Gemini. Check your connection; if this is a hosted artifact, its browser policy may block external requests. Download the file or use a host that allows Gemini API requests.':error.message||'Gemini could not generate palettes. Try again.'}
+finally{button.disabled=false}};
+
+/* palette color controls */
+$('#pcol').oninput=e=>{const p=parse(e.target.value);if(p)setRGB(p)};
+$('#prand').onclick=()=>$('#rand').click();
+$('#keytoggle').onclick=e=>{const input=$('#gk'),visible=input.type==='text';input.type=visible?'password':'text';e.currentTarget.textContent=visible?'Show':'Hide';e.currentTarget.setAttribute('aria-pressed',String(!visible));input.focus()};
+$('#gm').oninput=()=>$$('#moods button').forEach(b=>b.setAttribute('aria-pressed','false'));
+$$('#moods button').forEach(b=>b.onclick=()=>{$('#gm').value=b.textContent;$$('#moods button').forEach(item=>item.setAttribute('aria-pressed',String(item===b)));$('#gm').focus()});
+$('#gm').onkeydown=e=>{if(e.key==='Enter')$('#gb').click()};
+
+/* actions */
+$('#rand').onclick=()=>{H=Math.random()*360;S=40+Math.random()*60;V=55+Math.random()*45;render()};
+$('#copyhex').onclick=()=>copy(hex(...cur()));
+$('#exp').onclick=()=>copy(':root{\n'+harmony().map((c,i)=>`  --color-${i+1}: ${hex(...c)};`).join('\n')+'\n}');
+$('#theme').onclick=()=>{const d=document.documentElement,dark=matchMedia('(prefers-color-scheme:dark)').matches,now=d.dataset.theme||(dark?'dark':'light');d.dataset.theme=now=='dark'?'light':'dark'};
+
+/* routing on plain hash */
+function route(){const h=location.hash.slice(1);view=['picker','palettes','wheel','image','names','contrast'].includes(h)?h:'palettes';
+$$('section[data-s]').forEach(s=>s.hidden=!(s.dataset.s==view||(s.dataset.s=='pal'&&(view=='picker'||view=='wheel'))));
+$$('nav [data-v]').forEach(b=>b.setAttribute('aria-current',b.dataset.v==view));render()}
+$$('nav [data-v]').forEach(b=>b.onclick=()=>{location.hash=b.dataset.v});
+addEventListener('hashchange',route);route();
+</script>
+</body>
+</html>
