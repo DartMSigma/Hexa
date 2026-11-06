@@ -36,3 +36,4 @@ The key is used in the browser request to Google's Gemini API. Hexa does not sav
 
 - `index.html` — page structure and application logic
 - `style.css` — site styles
+- `fonts/bricolage-grotesque-latin.woff2` — locally hosted interface font (SIL Open Font License 1.1; see `fonts/OFL.txt`)
