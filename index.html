@@ -3,18 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Hexa: color picker, wheel, names and contrast</title>
-<link rel="stylesheet" href="style.css">
+<title>Hexa: color picker, palettes and contrast</title>
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 <nav aria-label="Tools">
 <b><i></i>Hexa</b>
-<button data-v="picker">Picker</button><button data-v="palettes">Palettes</button><button data-v="wheel">Wheel</button><button data-v="image">Image</button><button data-v="names">Names</button><button data-v="contrast">Contrast</button>
-<span class="sp"></span>
-<button id="theme" aria-label="Toggle light or dark theme">Theme</button>
+<button data-v="picker">Picker</button><button data-v="palettes">Palettes</button><button data-v="gradient">Gradient</button><button data-v="image">Image</button><button data-v="contrast">Contrast</button>
 </nav>
 
-<header class="stage">
+<header class="stage is-initializing">
 <h1 id="big">F54927</h1>
 <p id="lede">Pick a color to get its Hex, RGB, HSL and OKLCH codes.</p>
 <div class="row"><button class="btn" id="rand">Random color</button><button class="btn" id="copyhex">Copy hex</button><button class="btn" id="exp">Copy palette as CSS</button></div>
@@ -35,26 +33,37 @@
 </div>
 </section>
 
-<section data-s="wheel" hidden>
-<h2>Color wheel</h2><p class="sub">Click the wheel to set hue and saturation. Use the slider to change lightness.</p>
-<div class="wrap"><canvas id="wheel" width="360" height="360"></canvas></div>
-<label class="lab wheel-lightness">Lightness <span id="wl">50%</span></label>
-<input type="range" id="wlight" class="wheel-lightness-range" min="5" max="95" value="50" aria-label="Lightness">
-</section>
-
 <section data-s="image" hidden>
-<h2>Image color picker</h2><p class="sub">Open a photo, click anywhere on it to pick a color, or use the colors we found in it.</p>
-<div class="field"><input type="file" id="file" accept="image/*" aria-label="Choose an image"></div>
-<canvas id="imgc" class="image-canvas" width="10" height="10"></canvas>
+<h2>Colors from your image</h2><p class="sub">Move over the image to inspect pixels in the magnifier. Click a pixel or a found color to use it. Your image stays on this device.</p>
+<div class="image-drop" id="imageDrop">
+<input class="file-input" type="file" id="file" accept="image/*" aria-label="Choose an image">
+<span class="image-drop-mark" aria-hidden="true"></span>
+<div class="image-drop-copy"><strong>Drop an image here</strong><span>or choose a file from your device</span></div>
+<button class="btn2" id="imageChoose" type="button">Choose image</button>
+</div>
+<div class="image-preview" id="imagePreview" hidden>
+<div class="image-preview-bar"><span id="imageName">Image preview</span><button class="btn2" id="imageReplace" type="button">Choose another</button></div>
+<div class="image-canvas-wrap"><canvas id="imgc" class="image-canvas" width="10" height="10" tabindex="0" role="img" aria-describedby="image-key-help" aria-label="Image color sampler. Move the pointer to inspect pixels, click to select, or use the arrow keys and Enter."></canvas><canvas id="imageLoupe" class="image-loupe" width="168" height="168" aria-hidden="true" hidden></canvas><span class="image-pick-hint">Move to inspect · click to pick</span></div>
+<span class="helper image-key-help" id="image-key-help">Keyboard: focus the image, use arrow keys to inspect, then press Enter to pick</span>
+<div class="image-colors">
+<div class="image-colors-heading"><strong>Colors found</strong><span>Choose a swatch to use it</span></div>
 <div class="sw image-found" id="found"></div>
+</div>
+</div>
+<span class="image-note" id="imageStatus" role="status" aria-live="polite">Image files up to 20 MB · processed locally</span>
 </section>
 
 <section data-s="palettes" hidden>
-<h2>Palettes from one color</h2><p class="sub">Choose a color here, in the picker, or on the wheel. Every palette follows the same selection.</p>
+<h2>Palettes from one color</h2><p class="sub">Choose a color in the picker or enter its hex code. Every palette follows the same selection.</p>
 <div class="palette-controls">
 <div class="palette-panel">
 <h3>Choose your base color</h3><p class="sub">Enter a hex code or use the color well</p>
-<div class="palette-base-field"><input type="color" id="pcol" aria-label="Choose base color"><input type="text" id="pbase" maxlength="7" placeholder="#F54927" aria-label="Base hex color" aria-describedby="base-status" autocomplete="off" spellcheck="false"></div>
+<div class="palette-color-preview" id="paletteColorPreview">
+<div class="palette-color-preview-top"><span>Current base</span><span>Click the code to copy</span></div>
+<button class="palette-color-hex" id="copyBaseColor" type="button" aria-label="Copy base color">#ABCDEF</button>
+<div class="palette-color-preview-meta"><span id="baseRgb">rgb(171, 205, 239)</span><span id="baseHsl">hsl(210, 68%, 80%)</span></div>
+</div>
+<div class="palette-base-field"><button class="color-picker-trigger" id="pcol" type="button" aria-label="Choose base color" aria-expanded="false"><span></span></button><input type="text" id="pbase" maxlength="7" placeholder="#F54927" aria-label="Base hex color" aria-describedby="base-status" autocomplete="off" spellcheck="false"></div>
 <span class="helper" id="base-status">Try a color code such as #4A90A4</span>
 <div class="palette-actions"><button class="btn2" id="prand" type="button">Random base</button><button class="btn2" id="pshuf" type="button">Shuffle variations</button></div>
 </div>
@@ -64,7 +73,7 @@
 <div class="gemini-form">
 <label for="gm">Palette mood<input type="text" id="gm" placeholder="For example, calm luxury spa" autocomplete="off"></label>
 <label for="gk">Gemini API key<span class="key-control"><input type="password" id="gk" autocomplete="off" spellcheck="false" aria-describedby="key-help"><button class="btn2" id="keytoggle" type="button" aria-pressed="false">Show</button></span></label>
-<span class="helper" id="key-help">The key stays in this tab until you close it. Do not embed it in a public copy of this page.</span>
+<span class="helper" id="key-help">Used only when you generate palettes. Hexa does not save it; the browser sends it directly to Google.</span>
 <div class="gemini-actions"><button class="btn2" id="gb" type="button">Generate palettes</button><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Get an API key</a></div>
 </div>
 </div>
@@ -74,39 +83,73 @@
 <p class="sub" id="gs" role="status" aria-live="polite"></p><div class="pgrid" id="aip"></div>
 </section>
 
-<section data-s="names" hidden>
-<h2>HTML color names</h2><p class="sub">The 140 named CSS colors. Select one to use it.</p>
-<div class="field"><input type="search" id="q" placeholder="Search names or hex" aria-label="Search color names"></div>
-<div class="names" id="names"></div>
+<section data-s="gradient" hidden>
+<h2>Gradient blend</h2><p class="sub">Blend two colors, adjust opacity and copy the CSS.</p>
+<div class="gradient-tool">
+<div class="gradient-preview" id="gradientPreview" aria-label="Gradient preview"></div>
+<div class="gradient-tool-body">
+<div class="gradient-tool-heading"><div><h3>Choose your colors</h3><p class="sub">Start with your selected color or edit either hex value</p></div><button class="btn2" id="gradientReverse" type="button">Reverse colors</button></div>
+<div class="gradient-stop-controls">
+<div class="gradient-stop">
+<label for="gradientFrom">Start color</label>
+<span class="gradient-color-field"><button class="color-picker-trigger" id="gradientFromPicker" type="button" aria-label="Choose gradient start color" aria-expanded="false"><span></span></button><input type="text" id="gradientFrom" value="#F54927" maxlength="7" autocomplete="off" spellcheck="false" aria-label="Gradient start hex"></span>
+<label class="gradient-opacity" for="gradientFromOpacity"><span>Opacity</span><output id="gradientFromOpacityValue" for="gradientFromOpacity">100%</output><input type="range" id="gradientFromOpacity" min="0" max="100" value="100" aria-label="Start color opacity"></label>
+</div>
+<div class="gradient-stop">
+<label for="gradientTo">End color</label>
+<span class="gradient-color-field"><button class="color-picker-trigger" id="gradientToPicker" type="button" aria-label="Choose gradient end color" aria-expanded="false"><span></span></button><input type="text" id="gradientTo" value="#27CFF5" maxlength="7" autocomplete="off" spellcheck="false" aria-label="Gradient end hex"></span>
+<label class="gradient-opacity" for="gradientToOpacity"><span>Opacity</span><output id="gradientToOpacityValue" for="gradientToOpacity">100%</output><input type="range" id="gradientToOpacity" min="0" max="100" value="100" aria-label="End color opacity"></label>
+</div>
+</div>
+<div class="gradient-presets"><span>Quick starts</span><div><button class="btn2" id="gradientComplement" type="button">Picked + complement</button><button class="btn2" id="gradientFade" type="button">Fade to clear</button><button class="btn2" id="gradientReset" type="button">Reset</button></div></div>
+<div class="gradient-footer"><label class="gradient-angle" for="gradientAngle">Angle <output id="gradientAngleValue" for="gradientAngle">110°</output><input type="range" id="gradientAngle" min="0" max="360" value="110"></label><button class="btn2" id="gradientCopy" type="button">Copy CSS</button></div>
+<code class="gradient-code" id="gradientCode" aria-live="polite"></code>
+</div>
+</div>
 </section>
 
 <section data-s="contrast" hidden>
 <h2>Contrast checker</h2><p class="sub">Check that text is readable against its background (WCAG 2.2).</p>
-<div class="field">
-<input type="text" id="fg" value="#FFFFFF" aria-label="Text color"><button class="btn text-color-btn" id="fgp">Use picked as text</button>
-<input type="text" id="bg" value="#F54927" aria-label="Background color"><button class="btn text-color-btn" id="bgp">Use picked as background</button>
+<div class="contrast-workbench">
+<div class="contrast-controls">
+<div class="contrast-color-field"><label for="fg">Text color</label><span class="contrast-color-inputs"><button class="color-picker-trigger" id="fgPicker" type="button" aria-label="Pick text color" aria-expanded="false"><span></span></button><input type="text" id="fg" value="#F4F2ED" maxlength="7" autocomplete="off" spellcheck="false" aria-label="Text color hex"><button class="btn2 picked-color-btn" id="fgp" type="button">Use picked</button></span></div>
+<button class="contrast-reverse" id="contrastReverse" type="button" aria-label="Reverse text and background colors" title="Reverse text and background colors"><svg class="contrast-reverse-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none"><path d="M3 6h12m0 0-3-3m3 3-3 3M17 14H5m0 0 3-3m-3 3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Reverse</span></button>
+<div class="contrast-color-field"><label for="bg">Background color</label><span class="contrast-color-inputs"><button class="color-picker-trigger" id="bgPicker" type="button" aria-label="Pick background color" aria-expanded="false"><span></span></button><input type="text" id="bg" value="#F54927" maxlength="7" autocomplete="off" spellcheck="false" aria-label="Background color hex"><button class="btn2 picked-color-btn" id="bgp" type="button">Use picked</button></span></div>
 </div>
-<div class="grid">
-<div class="cc" id="ccs"><strong>Readable headline</strong>Body text sits on this background. Small print should still be easy to read.</div>
-<div><div class="score" id="ratio">3.6</div><div class="badges" id="badges"></div></div>
+<div class="contrast-results">
+<div class="cc" id="ccs"><div class="contrast-preview-label"><span class="preview-label">Live preview</span><span id="previewPair">#F4F2ED on #F54927</span></div><strong>Sample heading</strong><p>Body copy sample for smaller text.</p></div>
+<div class="contrast-score-panel"><div class="contrast-score-heading"><span class="score-label">Contrast ratio</span><span class="contrast-score-note">WCAG 2.2</span></div><div class="score" id="ratio">—</div><div class="badges" id="badges"></div><p class="helper" id="contrastStatus" role="status" aria-live="polite">Enter valid hex colors to check contrast</p></div>
+</div>
 </div>
 </section>
 
 <section data-s="pal">
-<h2>Harmonies</h2><p class="sub">Colors that work with your pick.</p>
-<div class="row"><select id="harm" aria-label="Harmony type">
-<option value="comp">Complementary</option><option value="analog">Analogous</option><option value="triad">Triadic</option><option value="split">Split complementary</option><option value="tetra">Tetradic</option><option value="mono">Monochromatic</option></select></div>
+<h2>Harmonies</h2><p class="sub">Click any harmony, shade, tint, or tone swatch to copy its hex code.</p>
+<div class="harmony-picker">
+<button class="harmony-trigger" id="harmTrigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="harmOptions"><span id="harmLabel">Complementary</span><span class="harmony-chevron" aria-hidden="true"></span></button>
+<div class="harmony-options" id="harmOptions" role="listbox" aria-label="Harmony type" hidden>
+<button type="button" role="option" data-harmony="comp" aria-selected="true">Complementary</button>
+<button type="button" role="option" data-harmony="analog" aria-selected="false">Analogous</button>
+<button type="button" role="option" data-harmony="triad" aria-selected="false">Triadic</button>
+<button type="button" role="option" data-harmony="split" aria-selected="false">Split complementary</button>
+<button type="button" role="option" data-harmony="tetra" aria-selected="false">Tetradic</button>
+<button type="button" role="option" data-harmony="mono" aria-selected="false">Monochromatic</button>
+</div>
+</div>
 <div class="sw harmony-swatches" id="hs"></div>
-<div class="lab">Shades <span>mixed with black</span></div><div class="sw" id="sh"></div>
-<div class="lab">Tints <span>mixed with white</span></div><div class="sw" id="ti"></div>
-<div class="lab">Tones <span>mixed with gray</span></div><div class="sw" id="to"></div>
+<div class="lab">Shades <span>mixed with black · click to copy</span></div><div class="sw" id="sh"></div>
+<div class="lab">Tints <span>mixed with white · click to copy</span></div><div class="sw" id="ti"></div>
+<div class="lab">Tones <span>mixed with gray · click to copy</span></div><div class="sw" id="to"></div>
 </section>
 </main>
 <div id="toast" role="status"></div>
 
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-let H=11,S=84,V=96,WL=50,view='picker';
+let H=11,S=84,V=96,view='picker',harmonyType='comp',imageObjectUrl=null;
+const COLOR_PREF='hexa.color';
+let preferenceSaveTimer=null,storageWarningShown=false;
+const colorPickers=new Map();
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 function hsv2rgb(h,s,v){s/=100;v/=100;const f=n=>{const k=(n+h/60)%6;return v-v*s*Math.max(0,Math.min(k,4-k,1))};return[f(5),f(3),f(1)].map(x=>Math.round(x*255))}
 function rgb2hsv(r,g,b){r/=255;g/=255;b/=255;const m=Math.max(r,g,b),n=Math.min(r,g,b),d=m-n;let h=0;if(d){h=m==r?((g-b)/d)%6:m==g?(b-r)/d+2:(r-g)/d+4;h*=60;if(h<0)h+=360}return[h,m?d/m*100:0,m*100]}
@@ -118,25 +161,57 @@ function oklch(r,g,b){const c=x=>{x/=255;return x<=.04045?x/12.92:((x+.055)/1.05
 l=Math.cbrt(.4122214708*R+.5363325363*G+.0514459929*B),m=Math.cbrt(.2119034982*R+.6806995451*G+.1073969566*B),s=Math.cbrt(.0883024619*R+.2817188376*G+.6299787005*B),
 L=.2104542553*l+.793617785*m-.0040720468*s,a=1.9779984951*l-2.428592205*m+.4505937099*s,k=.0259040371*l+.7827717662*m-.808675766*s;
 let h=Math.atan2(k,a)*180/Math.PI;if(h<0)h+=360;return[L*100,Math.hypot(a,k),h]}
-function lum(r,g,b){const c=x=>{x/=255;return x<=.03928?x/12.92:((x+.055)/1.055)**2.4};return .2126*c(r)+.7152*c(g)+.0722*c(b)}
+function lum(r,g,b){const c=x=>{x/=255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4};return .2126*c(r)+.7152*c(g)+.0722*c(b)}
 function ratio(a,b){const x=lum(...a),y=lum(...b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
 const cur=()=>hsv2rgb(H,S,V);
 function setRGB(rgb){[H,S,V]=rgb2hsv(...rgb);render()}
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1400)}
+function storageWarning(action,error){console.warn(`Could not ${action} Hexa preferences in browser storage.`,error);if(!storageWarningShown){storageWarningShown=true;toast('Browser storage is unavailable; preferences will not persist')}}
+function readPreference(key){try{return localStorage.getItem(key)}catch(error){storageWarning('read',error);return null}}
+function writePreference(key,value){try{localStorage.setItem(key,value)}catch(error){storageWarning('save',error)}}
+function restorePreferences(){const savedColor=readPreference(COLOR_PREF),rgb=savedColor&&parse(savedColor);if(rgb)[H,S,V]=rgb2hsv(...rgb)}
+function scheduleColorPreference(color){clearTimeout(preferenceSaveTimer);preferenceSaveTimer=setTimeout(()=>{preferenceSaveTimer=null;writePreference(COLOR_PREF,color)},160)}
+function flushColorPreference(){if(preferenceSaveTimer!==null){clearTimeout(preferenceSaveTimer);preferenceSaveTimer=null;writePreference(COLOR_PREF,hex(...cur()))}}
+function syncColorPicker(buttonId,color){const rgb=parse(color);if(!rgb)return;const picker=colorPickers.get(buttonId),button=$(`#${buttonId}`);if(button)button.querySelector('span').style.backgroundColor=hex(...rgb);if(picker)picker.sync(rgb)}
+function closeColorPickers(){colorPickers.forEach(({button,panel})=>{panel.hidden=true;button.setAttribute('aria-expanded','false')})}
+function initializeColorPicker(buttonId,inputId){const button=$(`#${buttonId}`),input=$(`#${inputId}`),host=button.parentElement;
+const panel=document.createElement('div'),plane=document.createElement('div'),marker=document.createElement('i'),hueLabel=document.createElement('label'),hueOutput=document.createElement('output'),hue=document.createElement('input');
+const planeId=`${buttonId}Surface`,hueId=`${buttonId}Hue`,initialHsv=rgb2hsv(...(parse(input.value)||[245,73,39])),state={hsv:initialHsv,lastHue:initialHsv[0]};
+host.classList.add('color-picker-host');button.classList.add('color-picker-trigger');button.dataset.pickerFor=inputId;button.setAttribute('aria-expanded','false');button.setAttribute('aria-controls',`${buttonId}Panel`);
+panel.id=`${buttonId}Panel`;panel.className='color-picker-panel';panel.setAttribute('role','group');panel.setAttribute('aria-label',`${button.getAttribute('aria-label')||'Color'} selector`);panel.hidden=true;
+plane.id=planeId;plane.className='color-picker-plane';plane.setAttribute('role','application');plane.setAttribute('tabindex','0');plane.setAttribute('aria-label','Saturation and brightness. Use the arrow keys to adjust.');plane.append(marker);
+hueLabel.className='color-picker-hue-label';hueLabel.htmlFor=hueId;hueLabel.append('Hue',hueOutput);
+hue.id=hueId;hue.className='color-picker-hue';hue.type='range';hue.min='0';hue.max='360';hue.setAttribute('aria-label',`${input.getAttribute('aria-label')||'Color'} hue`);
+panel.append(plane,hueLabel,hue);host.append(panel);
+const sync=rgb=>{const previousHue=state.hsv[0];state.hsv=rgb2hsv(...rgb);if(state.hsv[0]===0&&previousHue===360)state.hsv[0]=360;if(state.hsv[1]>0)state.lastHue=state.hsv[0];else state.hsv[0]=state.lastHue;const color=hex(...rgb);input.value=color;button.querySelector('span').style.backgroundColor=color;plane.style.backgroundImage=`linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,hsl(${state.hsv[0]} 100% 50%))`;marker.style.left=`${state.hsv[1]}%`;marker.style.top=`${100-state.hsv[2]}%`;hue.value=Math.round(state.hsv[0]);hueOutput.textContent=`${Math.round(state.hsv[0])}°`;plane.setAttribute('aria-valuetext',`Hue ${Math.round(state.hsv[0])} degrees, saturation ${Math.round(state.hsv[1])} percent, brightness ${Math.round(state.hsv[2])} percent`)};
+const apply=()=>{sync(hsv2rgb(...state.hsv));input.dispatchEvent(new Event('input',{bubbles:true}))};
+const move=event=>{const bounds=plane.getBoundingClientRect();state.hsv[1]=clamp((event.clientX-bounds.left-plane.clientLeft)/plane.clientWidth*100,0,100);state.hsv[2]=100-clamp((event.clientY-bounds.top-plane.clientTop)/plane.clientHeight*100,0,100);apply()};
+colorPickers.set(buttonId,{button,input,panel,plane,hue,state,sync});
+button.addEventListener('click',()=>{const opening=panel.hidden;closeColorPickers();if(opening){const rgb=parse(input.value);if(rgb)sync(rgb);panel.hidden=false;button.setAttribute('aria-expanded','true');const bounds=host.getBoundingClientRect(),width=Math.min(240,innerWidth-32),offset=Math.max(8-bounds.left,Math.min(0,innerWidth-8-width-bounds.left));panel.style.left=`${offset}px`}});
+input.addEventListener('input',()=>{const rgb=parse(input.value);input.setAttribute('aria-invalid',String(!rgb));if(rgb)sync(rgb)});
+hue.addEventListener('input',()=>{state.hsv[0]=Number(hue.value);state.lastHue=state.hsv[0];if(state.hsv[1]===0)state.hsv[1]=100;if(state.hsv[2]===0)state.hsv[2]=100;apply()});
+plane.onpointerdown=event=>{plane.setPointerCapture(event.pointerId);move(event)};
+plane.onpointermove=event=>{if(plane.hasPointerCapture(event.pointerId))move(event)};
+plane.onpointerup=event=>{if(plane.hasPointerCapture(event.pointerId))plane.releasePointerCapture(event.pointerId)};
+plane.onkeydown=event=>{const step=event.shiftKey?10:2;if(event.key==='ArrowLeft')state.hsv[1]-=step;else if(event.key==='ArrowRight')state.hsv[1]+=step;else if(event.key==='ArrowDown')state.hsv[2]-=step;else if(event.key==='ArrowUp')state.hsv[2]+=step;else if(event.key==='Escape'){event.preventDefault();closeColorPickers();button.focus();return}else return;event.preventDefault();state.hsv[1]=clamp(state.hsv[1],0,100);state.hsv[2]=clamp(state.hsv[2],0,100);apply()};
+sync(parse(input.value)||[245,73,39])}
+document.addEventListener('pointerdown',event=>{if(!event.target.closest('.color-picker-host'))closeColorPickers()});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&[...colorPickers.values()].some(picker=>!picker.panel.hidden)){const button=[...colorPickers.values()].find(picker=>!picker.panel.hidden).button;closeColorPickers();button.focus()}});
 function copy(t){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Copied '+t),()=>toast('Copy blocked. Select the text instead.'))}
 
-function sw(el,cols){el.innerHTML='';cols.forEach(c=>{const h=hex(...c),b=document.createElement('button');b.style.background=h;b.style.color=ratio(c,[255,255,255])>3?'#fff':'#15171c';b.textContent=h.slice(1);b.title='Use '+h;b.onclick=()=>setRGB(c);el.append(b)})}
+function sw(el,cols,action='use'){el.innerHTML='';cols.forEach(c=>{const h=hex(...c),b=document.createElement('button');b.style.background=h;b.style.color=ratio(c,[255,255,255])>3?'#fff':'#15171c';b.textContent=h.slice(1);b.title=`${action==='copy'?'Copy':'Use'} ${h}`;if(action==='copy'){b.setAttribute('aria-label',`Copy ${h}`);b.onclick=()=>copy(h)}else b.onclick=()=>setRGB(c);el.append(b)})}
 function mix(a,b,t){return a.map((x,i)=>x+(b[i]-x)*t)}
-function harmony(){const[h,s,l]=rgb2hsl(...cur()),t=$('#harm').value;
+function harmony(){const[h,s,l]=rgb2hsl(...cur()),t=harmonyType;
 if(t=='mono')return[20,35,50,65,80].map(L=>hsl2rgb(h,s,L));
 const o={comp:[0,180],analog:[-30,0,30],triad:[0,120,240],split:[0,150,210],tetra:[0,90,180,270]}[t];return o.map(d=>hsl2rgb(h+d,s,l))}
 
 function render(){
 const rgb=cur(),hx=hex(...rgb),[,sl,l]=rgb2hsl(...rgb),hsl=rgb2hsl(...rgb),ok=oklch(...rgb);
-const on=ratio(rgb,[255,255,255])>=3?'#fff':'#15171c';
+scheduleColorPreference(hx);
+const on=ratio(rgb,[244,242,237])>=3?'#f4f2ed':'#15171c';
 const r=document.documentElement.style;r.setProperty('--c',hx);r.setProperty('--on',on);
 $('#big').textContent=hx.slice(1);document.title='#'+hx.slice(1)+' · Hexa';
-$('#lede').textContent=`rgb(${rgb}) · hsl(${hsl.map(Math.round)[0]}, ${Math.round(hsl[1])}%, ${Math.round(hsl[2])}%)`.replace(/ · /,' and ');
+$('#lede').textContent=`rgb(${rgb}) · hsl(${Math.round(H===360&&hsl[0]===0?360:hsl[0])}, ${Math.round(hsl[1])}%, ${Math.round(hsl[2])}%)`.replace(/ · /,' and ');
 $('#sv').style.background=`linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,hsl(${H} 100% 50%))`;
 const i=$('#sv i');i.style.left=S+'%';i.style.top=(100-V)+'%';i.style.background=hx;$('#hue').value=H;
 const vs=[['Hex',hx],['RGB',`rgb(${rgb.join(', ')})`],['HSL',`hsl(${Math.round(hsl[0])}, ${Math.round(hsl[1])}%, ${Math.round(hsl[2])}%)`],['OKLCH',`oklch(${ok[0].toFixed(1)}% ${ok[1].toFixed(3)} ${ok[2].toFixed(0)})`],['CSS variable',`--color: ${hx};`]];
@@ -144,55 +219,87 @@ const box=$('#vals');if(!box.dataset.b){box.dataset.b=1;box.innerHTML=`<label cl
 const hin=$('#hin');if(document.activeElement!==hin)hin.value=hx;
 hin.oninput=()=>{const p=parse(hin.value);if(p){[H,S,V]=rgb2hsv(...p);render()}};
 $$('#vals button').forEach((b,k)=>{b.children[0].textContent=vs[k][0];b.children[1].textContent=vs[k][1];b.onclick=()=>copy(vs[k][1])});
-sw($('#hs'),harmony());
+sw($('#hs'),harmony(),'copy');
 const steps=[.1,.2,.3,.4,.5,.6,.7,.8,.9];
-sw($('#sh'),[...steps].reverse().map(t=>mix(rgb,[0,0,0],t)));
-sw($('#ti'),steps.map(t=>mix(rgb,[255,255,255],t)));
-sw($('#to'),steps.map(t=>mix(rgb,[128,128,128],t)));
-if(view=='wheel')drawWheel();
+sw($('#sh'),[...steps].reverse().map(t=>mix(rgb,[0,0,0],t)),'copy');
+sw($('#ti'),steps.map(t=>mix(rgb,[255,255,255],t)),'copy');
+sw($('#to'),steps.map(t=>mix(rgb,[128,128,128],t)),'copy');
 if(view=='contrast')contrast();
 if(view=='palettes')pals();
+if(view=='gradient')syncGradientToSelection();
 }
 
 /* picker events */
 const sv=$('#sv');function svmove(e){const b=sv.getBoundingClientRect();S=clamp((e.clientX-b.left)/b.width*100,0,100);V=100-clamp((e.clientY-b.top)/b.height*100,0,100);render()}
 sv.onpointerdown=e=>{sv.setPointerCapture(e.pointerId);svmove(e);sv.onpointermove=svmove};sv.onpointerup=()=>sv.onpointermove=null;
 $('#hue').oninput=e=>{H=+e.target.value;render()};
-$('#harm').onchange=render;
 
-/* wheel */
-const wc=$('#wheel'),wx=wc.getContext('2d');
-function drawWheel(){const n=wc.width,d=wx.createImageData(n,n),R=n/2;
-for(let y=0;y<n;y++)for(let x=0;x<n;x++){const dx=x-R,dy=y-R,rr=Math.hypot(dx,dy),k=(y*n+x)*4;if(rr>R){continue}
-let a=Math.atan2(dy,dx)*180/Math.PI+90;const c=hsl2rgb(a,rr/R*100,WL);d.data[k]=c[0];d.data[k+1]=c[1];d.data[k+2]=c[2];d.data[k+3]=255}
-wx.putImageData(d,0,0);const[h,s]=rgb2hsl(...cur());const set=[...harmony()].map(c=>rgb2hsl(...c)[0]);
-set.forEach((hh,i)=>{const ang=(hh-90)*Math.PI/180,rad=s/100*R;wx.beginPath();wx.arc(R+Math.cos(ang)*rad,R+Math.sin(ang)*rad,i?9:13,0,7);wx.fillStyle=hex(...hsl2rgb(hh,s,WL));wx.fill();wx.lineWidth=3;wx.strokeStyle='#fff';wx.stroke()});$('#wl').textContent=WL+'%'}
-function wpick(e){const b=wc.getBoundingClientRect(),R=b.width/2,dx=e.clientX-b.left-R,dy=e.clientY-b.top-R;const s=clamp(Math.hypot(dx,dy)/R*100,0,100),h=Math.atan2(dy,dx)*180/Math.PI+90;setRGB(hsl2rgb(h,s,WL))}
-wc.onpointerdown=e=>{wc.setPointerCapture(e.pointerId);wpick(e);wc.onpointermove=wpick};wc.onpointerup=()=>wc.onpointermove=null;
-$('#wlight').oninput=e=>{WL=+e.target.value;const[h,s]=rgb2hsl(...cur());setRGB(hsl2rgb(h,s,WL))};
+const harmTrigger=$('#harmTrigger'),harmOptions=$('#harmOptions'),harmItems=$$('#harmOptions [role="option"]');
+function closeHarmony(restoreFocus=false){harmTrigger.setAttribute('aria-expanded','false');harmOptions.hidden=true;if(restoreFocus)harmTrigger.focus()}
+function openHarmony(focusSelected=false){harmOptions.hidden=false;harmTrigger.setAttribute('aria-expanded','true');if(focusSelected)harmItems.find(item=>item.dataset.harmony===harmonyType)?.focus()}
+harmTrigger.onclick=()=>harmOptions.hidden?openHarmony():closeHarmony();
+harmTrigger.onkeydown=e=>{if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();openHarmony(true)}};
+harmItems.forEach((item,index)=>{item.onclick=()=>{harmonyType=item.dataset.harmony;$('#harmLabel').textContent=item.textContent;harmItems.forEach(option=>option.setAttribute('aria-selected',String(option===item)));render();closeHarmony(true)};
+item.onkeydown=e=>{let next=index;if(e.key==='ArrowDown')next=(index+1)%harmItems.length;else if(e.key==='ArrowUp')next=(index-1+harmItems.length)%harmItems.length;else if(e.key==='Home')next=0;else if(e.key==='End')next=harmItems.length-1;else if(e.key==='Escape'){e.preventDefault();closeHarmony(true);return}else return;e.preventDefault();harmItems[next].focus()}});
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.harmony-picker'))closeHarmony()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!harmOptions.hidden)closeHarmony(true)});
 
 /* image */
-const ic=$('#imgc'),ix=ic.getContext('2d',{willReadFrequently:true});
-$('#file').onchange=e=>{const f=e.target.files[0];if(!f)return;const img=new Image();img.onload=()=>{const k=Math.min(1,720/img.width);ic.width=img.width*k;ic.height=img.height*k;ic.style.display='block';ix.drawImage(img,0,0,ic.width,ic.height);found();URL.revokeObjectURL(img.src)};img.src=URL.createObjectURL(f)};
-ic.onclick=e=>{const b=ic.getBoundingClientRect(),p=ix.getImageData((e.clientX-b.left)*ic.width/b.width,(e.clientY-b.top)*ic.height/b.height,1,1).data;setRGB([p[0],p[1],p[2]])};
-function found(){const d=ix.getImageData(0,0,ic.width,ic.height).data,m={};for(let i=0;i<d.length;i+=16){const k=[d[i]>>5,d[i+1]>>5,d[i+2]>>5].join();(m[k]=m[k]||[0,0,0,0]);m[k][0]+=d[i];m[k][1]+=d[i+1];m[k][2]+=d[i+2];m[k][3]++}
+const ic=$('#imgc'),ix=ic.getContext('2d',{willReadFrequently:true}),lens=$('#imageLoupe'),lx=lens.getContext('2d');
+const imageInput=$('#file'),imageDrop=$('#imageDrop'),imagePreview=$('#imagePreview'),imageStatus=$('#imageStatus');
+let inspectedPixel={x:0,y:0};
+const lensCells=11,lensCellSize=lens.width/lensCells;
+function inspectImagePixel(x,y,anchorX,anchorY){x=clamp(Math.round(x),0,ic.width-1);y=clamp(Math.round(y),0,ic.height-1);inspectedPixel={x,y};
+const startX=x-Math.floor(lensCells/2),startY=y-Math.floor(lensCells/2),pixels=ix.getImageData(Math.max(0,startX),Math.max(0,startY),Math.min(lensCells,ic.width-Math.max(0,startX)),Math.min(lensCells,ic.height-Math.max(0,startY))),wrap=imagePreview.querySelector('.image-canvas-wrap'),wrapRect=wrap.getBoundingClientRect();
+lx.clearRect(0,0,lens.width,lens.height);lx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--bg');lx.fillRect(0,0,lens.width,lens.height);
+for(let row=0;row<lensCells;row++)for(let col=0;col<lensCells;col++){const px=startX+col,py=startY+row;if(px<0||py<0||px>=ic.width||py>=ic.height)continue;
+const offset=((py-Math.max(0,startY))*pixels.width+(px-Math.max(0,startX)))*4;lx.fillStyle=`rgb(${pixels.data[offset]}, ${pixels.data[offset+1]}, ${pixels.data[offset+2]})`;lx.fillRect(col*lensCellSize,row*lensCellSize,lensCellSize,lensCellSize)}
+lx.strokeStyle='rgba(255,255,255,.32)';lx.lineWidth=1;
+for(let i=0;i<=lensCells;i++){const pos=Math.round(i*lensCellSize)+.5;lx.beginPath();lx.moveTo(pos,0);lx.lineTo(pos,lens.height);lx.moveTo(0,pos);lx.lineTo(lens.width,pos);lx.stroke()}
+const center=Math.floor(lensCells/2)*lensCellSize;lx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--c').trim();lx.lineWidth=2;lx.strokeRect(center+1,center+1,lensCellSize-2,lensCellSize-2);
+const lensSize=168,left=clamp(anchorX+18,8,Math.max(8,wrapRect.width-lensSize-8)),top=clamp(anchorY+18,8,Math.max(8,wrapRect.height-lensSize-8));lens.style.left=`${left}px`;lens.style.top=`${top}px`;lens.hidden=false;
+imageStatus.textContent=`Pixel ${hex(pixels.data[((y-Math.max(0,startY))*pixels.width+(x-Math.max(0,startX)))*4],pixels.data[((y-Math.max(0,startY))*pixels.width+(x-Math.max(0,startX)))*4+1],pixels.data[((y-Math.max(0,startY))*pixels.width+(x-Math.max(0,startX)))*4+2])} · click or press Enter to pick`}
+function loadImage(file){if(!file)return;
+if(!file.type.startsWith('image/')){imageDrop.hidden=false;imagePreview.hidden=true;imageStatus.textContent='Choose an image file to continue';return}
+if(file.size>20*1024*1024){imageDrop.hidden=false;imagePreview.hidden=true;imageStatus.textContent='That image is over 20 MB. Choose a smaller file';return}
+if(imageObjectUrl)URL.revokeObjectURL(imageObjectUrl);
+imageDrop.hidden=false;imagePreview.hidden=true;lens.hidden=true;imageStatus.textContent='Loading image…';
+const url=URL.createObjectURL(file),img=new Image();imageObjectUrl=url;
+img.onload=()=>{if(imageObjectUrl!==url)return;const scale=Math.min(1,900/img.width,600/img.height);ic.width=Math.max(1,Math.round(img.width*scale));ic.height=Math.max(1,Math.round(img.height*scale));
+try{ix.drawImage(img,0,0,ic.width,ic.height);found();$('#imageName').textContent=file.name;imageDrop.hidden=true;imagePreview.hidden=false;imageStatus.textContent='Image ready. It stays on this device.';inspectImagePixel(Math.floor(ic.width/2),Math.floor(ic.height/2),8,8)}
+catch(error){imageStatus.textContent='Could not read this image. Try another file.';console.error('Image processing failed',error)}
+finally{URL.revokeObjectURL(url);if(imageObjectUrl===url)imageObjectUrl=null}};
+img.onerror=()=>{if(imageObjectUrl!==url)return;URL.revokeObjectURL(url);if(imageObjectUrl===url)imageObjectUrl=null;imageDrop.hidden=false;imagePreview.hidden=true;imageStatus.textContent='Could not open this image. Try another file.'};
+img.src=url}
+$('#imageChoose').onclick=()=>imageInput.click();
+$('#imageReplace').onclick=()=>imageInput.click();
+imageInput.onchange=e=>{loadImage(e.target.files[0]);e.target.value=''};
+imageDrop.ondragover=e=>{e.preventDefault();imageDrop.classList.add('is-dragging')};
+imageDrop.ondragleave=e=>{if(!imageDrop.contains(e.relatedTarget))imageDrop.classList.remove('is-dragging')};
+imageDrop.ondrop=e=>{e.preventDefault();imageDrop.classList.remove('is-dragging');loadImage(e.dataTransfer.files[0])};
+function pickImagePixel(){const p=ix.getImageData(inspectedPixel.x,inspectedPixel.y,1,1).data;setRGB([p[0],p[1],p[2]]);imageStatus.textContent=`Picked ${hex(p[0],p[1],p[2])} from image`}
+ic.onpointermove=e=>{const b=ic.getBoundingClientRect(),x=clamp((e.clientX-b.left)*ic.width/b.width,0,ic.width-1),y=clamp((e.clientY-b.top)*ic.height/b.height,0,ic.height-1),w=imagePreview.querySelector('.image-canvas-wrap').getBoundingClientRect();inspectImagePixel(x,y,e.clientX-w.left,e.clientY-w.top)};
+ic.onpointerleave=e=>{if(e.pointerType==='mouse')lens.hidden=true};
+ic.onclick=pickImagePixel;
+ic.onkeydown=e=>{let{x,y}=inspectedPixel;if(e.key==='ArrowLeft')x--;else if(e.key==='ArrowRight')x++;else if(e.key==='ArrowUp')y--;else if(e.key==='ArrowDown')y++;else if(e.key==='Enter'||e.key===' '){e.preventDefault();pickImagePixel();return}else return;e.preventDefault();const w=imagePreview.querySelector('.image-canvas-wrap');inspectImagePixel(x,y,w.clientWidth/2-lens.width/2,w.clientHeight/2-lens.height/2)};
+function found(){const d=ix.getImageData(0,0,ic.width,ic.height).data,m={};for(let i=0;i<d.length;i+=4){const k=[d[i]>>5,d[i+1]>>5,d[i+2]>>5].join();(m[k]=m[k]||[0,0,0,0]);m[k][0]+=d[i];m[k][1]+=d[i+1];m[k][2]+=d[i+2];m[k][3]++}
 const top=Object.values(m).sort((a,b)=>b[3]-a[3]).map(v=>[v[0]/v[3],v[1]/v[3],v[2]/v[3]].map(Math.round)),out=[];
 for(const c of top){if(out.every(o=>Math.hypot(o[0]-c[0],o[1]-c[1],o[2]-c[2])>60))out.push(c);if(out.length==6)break}sw($('#found'),out)}
 
-/* names */
-const NM='aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkturquoise darkviolet deeppink deepskyblue dimgray dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen lightpink lightsalmon lightseagreen lightskyblue lightslategray lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen'.split(' ');
-const cx=document.createElement('canvas').getContext('2d');
-const NL=NM.map(n=>{cx.fillStyle=n;return[n,cx.fillStyle.toUpperCase()]});
-function names(){const q=$('#q').value.toLowerCase().replace('#',''),b=$('#names');b.innerHTML='';NL.filter(([n,h])=>n.includes(q)||h.toLowerCase().includes(q)).forEach(([n,h])=>{const e=document.createElement('button');e.innerHTML=`<i style="background:${h}"></i><div>${n}<small>${h}</small></div>`;e.onclick=()=>setRGB(parse(h));b.append(e)});if(!b.children.length)b.textContent='No colors match. Try a shorter name or a hex code.'}
-$('#q').oninput=names;names();
-
 /* contrast */
-function contrast(){const f=parse($('#fg').value),g=parse($('#bg').value);if(!f||!g){$('#ratio').textContent='?';$('#badges').textContent='Enter two six-digit hex codes.';return}
-const r=ratio(f,g);$('#ratio').textContent=r.toFixed(2)+':1';const c=$('#ccs');c.style.background=hex(...g);c.style.color=hex(...f);
-const t=[['Normal text AA',4.5],['Normal text AAA',7],['Large text AA',3],['UI components AA',3]];
-$('#badges').innerHTML=t.map(([n,m])=>`<span class="${r>=m?'ok':'no'}">${n}: ${r>=m?'Pass':'Fail'}</span>`).join('')}
-$('#fg').oninput=$('#bg').oninput=contrast;
-$('#fgp').onclick=()=>{$('#fg').value=hex(...cur());contrast()};$('#bgp').onclick=()=>{$('#bg').value=hex(...cur());contrast()};
+function contrast(){const fg=$('#fg'),bg=$('#bg'),f=parse(fg.value),g=parse(bg.value),badges=$('#badges'),status=$('#contrastStatus'),preview=$('#ccs');
+for(const input of [fg,bg])input.setAttribute('aria-invalid',String(!parse(input.value)));
+if(!f||!g){$('#ratio').textContent='—';badges.replaceChildren();$('#previewPair').textContent='Enter two valid hex colors';status.textContent='Enter valid 3- or 6-digit hex colors to check contrast';return}
+const foreground=hex(...f),background=hex(...g),r=ratio(f,g);syncColorPicker('fgPicker',foreground);syncColorPicker('bgPicker',background);$('#ratio').textContent=r.toFixed(2)+':1';preview.style.backgroundColor=background;preview.style.color=foreground;$('#previewPair').textContent=`${foreground} on ${background}`;
+const results=[['Body text','AA',4.5],['Body text','AAA',7],['Large text','AA',3],['Large text','AAA',4.5]];badges.replaceChildren();
+results.forEach(([label,level,threshold])=>{const result=document.createElement('div'),name=document.createElement('span'),value=document.createElement('strong'),passes=r>=threshold;result.className=`contrast-check ${passes?'ok':'no'}`;name.textContent=`${label} · ${level}`;value.textContent=passes?'Pass':'Fail';result.append(name,value);badges.append(result)});
+status.textContent=r>=4.5?'Meets WCAG AA for normal text':r>=3?'Meets AA for large text, but not normal text':'Does not meet WCAG AA for normal or large text'}
+function contrastInput(input){input.addEventListener('input',contrast)}
+contrastInput($('#fg'));contrastInput($('#bg'));
+$('#fgp').onclick=()=>{$('#fg').value=hex(...cur());contrast()};
+$('#bgp').onclick=()=>{$('#bg').value=hex(...cur());contrast()};
+$('#contrastReverse').onclick=()=>{const foreground=$('#fg').value;$('#fg').value=$('#bg').value;$('#bg').value=foreground;contrast()};
+contrast();
 
 /* palettes */
 const PN=[['Blush Petal','Coral Ember','Garnet Red','Oxblood'],['Apricot Cream','Tangerine Glow','Burnt Copper','Roasted Chestnut'],['Champagne','Saffron Gold','Antique Brass','Dark Umber'],['Pale Pistachio','Chartreuse Leaf','Moss Green','Forest Olive'],['Mint Whisper','Emerald','Pine Green','Evergreen'],['Sea Foam','Jade','Malachite','Deep Spruce'],['Misty Aqua','Caribbean Teal','Peacock Blue','Deep Teal'],['Sky Haze','Cerulean','Ocean Blue','Navy Tide'],['Frost Blue','Cobalt','Sapphire','Midnight Blue'],['Lilac Mist','Amethyst','Royal Plum','Deep Aubergine'],['Orchid Pink','Fuchsia Glow','Mulberry','Dark Plum'],['Rose Quartz','Raspberry','Wine Rose','Burgundy']],GN=['Pearl','Silver Mist','Graphite','Onyx'];
@@ -203,21 +310,26 @@ const STY=[['Tonal depth',(h,s,l)=>[P(h,s*.6+10,93),P(h,s,clamp(l,38,52)),P(h,s*
 ['Complementary contrast',(h,s,l)=>[P(h,s*.5+10,93),P(h,s,clamp(l,40,55)),P(h+180,s*.8,42),P(h+180,s*.7,16)]],
 ['Triadic balance',(h,s,l)=>[P(h,s*.5,92),P(h,s,clamp(l,40,55)),P(h+120,s*.75,36),P(h+240,s*.7,20)]],
 ['Soft pastel',(h,s,l)=>[P(h,60,93),P(h+20,55,84),P(h-20,50,72),P(h,30,38)]],
-['Warm neutrals',(h,s,l)=>[P(h,14,94),P(h,26,72),P(h,s*.45,36),P(h,s*.35,14)]]];
+['Warm neutrals',(h,s,l)=>[P(h,14,94),P(h,26,72),P(h,s*.45,36),P(h,s*.35,14)]],
+['Split complementary',(h,s,l)=>[P(h,s*.45+10,92),P(h,s,clamp(l,42,56)),P(h+150,s*.8,38),P(h+210,s*.75,18)]],
+['Monochromatic',(h,s,l)=>[P(h,s*.65,88),P(h,s*.85,68),P(h,s,clamp(l,38,55)),P(h,s*.9,20)]]];
 let PJ=[0,0];
 function pcard(title,cols){const d=document.createElement('article');d.className='pc';const b=document.createElement('div');b.className='pb';
 cols.forEach(([c,n])=>{const x=hex(...c),e=document.createElement('button'),name=document.createElement('b'),code=document.createElement('small');e.type='button';e.style.background=x;e.style.color=ratio(c,[255,255,255])>=4.5?'#fff':'#15171c';name.textContent=n;code.textContent='HEX: '+x;e.append(name,code);e.title='Copy '+x;e.onclick=()=>copy(x);b.append(e)});
 const f=document.createElement('div');f.className='pf';const label=document.createElement('span'),copyBtn=document.createElement('button');label.textContent=title;copyBtn.type='button';copyBtn.className='btn2';copyBtn.textContent='Copy CSS';
 copyBtn.onclick=()=>copy(':root{\n'+cols.map(([c,n])=>`  --${String(n||'color').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'color'}: ${hex(...c)};`).join('\n')+'\n}');f.append(label,copyBtn);d.append(b,f);return d}
-function pals(){const[h,s,l]=rgb2hsl(...cur()),pb=$('#pbase');$('#pcol').value=hex(...cur());if(document.activeElement!==pb)pb.value=hex(...cur());
-const g=$('#pgrid');g.innerHTML='';STY.forEach(([t,fn])=>g.append(pcard(t,fn(h+PJ[0],clamp(s+PJ[1],8,100),l).map(c=>[c,nameFor(c)]))))}
+function pals(){const[h,s,l]=rgb2hsl(...cur()),pb=$('#pbase'),rgb=cur(),baseHex=hex(...rgb);syncColorPicker('pcol',baseHex);$('#paletteColorPreview').style.backgroundColor=baseHex;$('#paletteColorPreview').style.color=ratio(rgb,[244,242,237])>=4.5?'#f4f2ed':'#15171c';$('#copyBaseColor').textContent=baseHex;$('#baseRgb').textContent=`rgb(${rgb.join(', ')})`;$('#baseHsl').textContent=`hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;if(document.activeElement!==pb)pb.value=baseHex;
+const g=$('#pgrid');g.innerHTML='';STY.forEach(([t,fn],i)=>{const card=pcard(t,fn(h+PJ[0],clamp(s+PJ[1],8,100),l).map(c=>[c,nameFor(c)]));card.style.setProperty('--item-index',i);g.append(card)});
+syncGradientToSelection()}
 $('#pbase').oninput=e=>{const p=parse(e.target.value),status=$('#base-status');if(p){e.target.setAttribute('aria-invalid','false');status.textContent='';status.classList.remove('error');setRGB(p)}else{e.target.setAttribute('aria-invalid','true');status.textContent='Enter a valid 3- or 6-digit hex code';status.classList.add('error')}};
 $('#pbase').onblur=e=>{if(!parse(e.target.value)){e.target.value=hex(...cur());e.target.setAttribute('aria-invalid','false');$('#base-status').textContent='Try a color code such as #4A90A4';$('#base-status').classList.remove('error')}};
+$('#copyBaseColor').onclick=()=>copy(hex(...cur()));
 $('#pshuf').onclick=()=>{PJ=[(Math.random()-.5)*30,(Math.random()-.5)*24];pals()};
 function readGeminiPalettes(payload,base){if(!payload||typeof payload!=='object')throw new Error('Gemini returned an unreadable response.');
 const text=payload.candidates&&payload.candidates[0]&&payload.candidates[0].content&&payload.candidates[0].content.parts&&payload.candidates[0].content.parts.map(part=>part.text||'').join('').trim();
 if(!text)throw new Error(payload.promptFeedback&&payload.promptFeedback.blockReason?'The request was blocked by Gemini. Try a different mood.':'Gemini returned no palette data.');
 let data;try{data=JSON.parse(text)}catch{throw new Error('Gemini returned invalid palette data. Try generating again.')}
+if(data&&!Array.isArray(data)&&Array.isArray(data.palettes))data=data.palettes;
 if(!Array.isArray(data)||data.length!==4)throw new Error('Gemini did not return exactly four palettes. Try generating again.');
 return data.map((palette,index)=>{if(!Array.isArray(palette.colors)||palette.colors.length!==4)throw new Error(`Palette ${index+1} did not contain exactly four colors.`);
 const colors=palette.colors.map(color=>{const rgb=parse(String(color.hex||'')),name=typeof color.name==='string'?color.name.trim():'';if(!rgb||!name)throw new Error(`Palette ${index+1} included an invalid color.`);return[rgb,name]});
@@ -225,16 +337,46 @@ if(!colors.some(([rgb])=>hex(...rgb)===base))throw new Error(`Palette ${index+1}
 return{title:typeof palette.title==='string'&&palette.title.trim()?palette.title.trim():`Gemini palette ${index+1}`,colors}})}
 $('#gb').onclick=async()=>{const key=$('#gk').value.trim(),st=$('#gs'),out=$('#aip'),button=$('#gb');
 if(!key){st.textContent='Add your Gemini API key to generate palettes.';$('#gk').focus();return}
-const mood=$('#gm').value.trim()||'premium and modern',base=hex(...cur());button.disabled=true;st.textContent=`Generating palettes for ${base}…`;out.replaceChildren();
-try{const response=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({contents:[{parts:[{text:`Create exactly 4 distinct, polished color palettes for the mood "${mood}". The user's chosen base color is ${base}. Each palette must contain exactly 4 colors, include the exact base color ${base} as one of its colors, and keep the other colors harmonious with it. Give the other colors evocative, concise names. Return only JSON matching the requested schema.`}]}],generationConfig:{responseMimeType:'application/json',responseSchema:{type:'ARRAY',items:{type:'OBJECT',properties:{title:{type:'STRING'},colors:{type:'ARRAY',items:{type:'OBJECT',properties:{name:{type:'STRING'},hex:{type:'STRING'}},required:['name','hex']}}},required:['title','colors']}}}})});
+const mood=$('#gm').value.trim()||'premium and modern',base=hex(...cur()),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);button.disabled=true;st.textContent=`Generating palettes for ${base}…`;out.replaceChildren();
+try{const response=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},signal:controller.signal,body:JSON.stringify({contents:[{parts:[{text:`Create exactly 4 distinct color palettes for the mood "${mood}". The user's chosen base color is ${base}. Each palette must contain exactly 4 colors, include the exact base color ${base}, and keep the other colors harmonious. Give each other color a short name. Return only the requested JSON.`}]}],generationConfig:{responseMimeType:'application/json',responseSchema:{type:'OBJECT',properties:{palettes:{type:'ARRAY',items:{type:'OBJECT',properties:{title:{type:'STRING'},colors:{type:'ARRAY',items:{type:'OBJECT',properties:{name:{type:'STRING'},hex:{type:'STRING'}},required:['name','hex']}}},required:['title','colors']}}},required:['palettes']},maxOutputTokens:2048}})});
 let payload;try{payload=await response.json()}catch{throw new Error(`Gemini returned an unreadable response (HTTP ${response.status}).`)}
 if(!response.ok)throw new Error(payload.error&&payload.error.message?`Gemini error (${response.status}): ${payload.error.message}`:`Gemini request failed (HTTP ${response.status}).`);
-const palettes=readGeminiPalettes(payload,base);palettes.forEach(palette=>out.append(pcard(palette.title,palette.colors)));st.textContent=`Gemini made ${palettes.length} palettes from ${base} for “${mood}”.`}
-catch(error){st.textContent=error instanceof TypeError?'Could not reach Gemini. Check your connection; if this is a hosted artifact, its browser policy may block external requests. Download the file or use a host that allows Gemini API requests.':error.message||'Gemini could not generate palettes. Try again.'}
-finally{button.disabled=false}};
+const palettes=readGeminiPalettes(payload,base);palettes.forEach((palette,index)=>{const card=pcard(palette.title,palette.colors);card.style.setProperty('--item-index',index);out.append(card)});st.textContent=`Gemini made ${palettes.length} palettes from ${base} for “${mood}”.`}
+catch(error){st.textContent=error.name==='AbortError'?'Gemini took longer than 30 seconds to respond. Try again; if it keeps happening, check your API key and network connection.':error instanceof TypeError?'Could not reach Gemini. Check your connection; if this is a hosted artifact, its browser policy may block external requests. Download the file or use a host that allows Gemini API requests.':error.message||'Gemini could not generate palettes. Try again.'}
+finally{clearTimeout(timeout);button.disabled=false}};
 
 /* palette color controls */
-$('#pcol').oninput=e=>{const p=parse(e.target.value);if(p)setRGB(p)};
+let gradientAngle=110,gradientEndMode='complement';
+function updateGradientPicker(which,color){syncColorPicker(`gradient${which==='from'?'From':'To'}Picker`,color)}
+function updateGradientStart(color){const from=$('#gradientFrom');if(!from)return;from.value=color;updateGradientPicker('from',color)}
+function syncGradientToSelection(){const[h,s,l]=rgb2hsl(...cur()),color=hex(...cur());updateGradientStart(color);
+if(gradientEndMode==='complement'){const end=hex(...hsl2rgb(h+180,s,l));$('#gradientTo').value=end;$('#gradientToOpacity').value='100';updateGradientPicker('to',end)}
+else if(gradientEndMode==='fade'){$('#gradientTo').value=color;$('#gradientToOpacity').value='0';updateGradientPicker('to',color)}
+updateGradient()}
+function gradientStopColor(rgb,opacity){return`rgba(${rgb.join(', ')}, ${(Number(opacity)/100).toFixed(2).replace(/0+$/,'').replace(/\.$/,'')})`}
+function updateGradient(){const from=parse($('#gradientFrom').value),to=parse($('#gradientTo').value),angle=$('#gradientAngle').value,preview=$('#gradientPreview'),code=$('#gradientCode'),fromOpacity=$('#gradientFromOpacity').value,toOpacity=$('#gradientToOpacity').value;
+$('#gradientFrom').setAttribute('aria-invalid',String(!from));$('#gradientTo').setAttribute('aria-invalid',String(!to));
+if(!from||!to)return;
+$('#gradientFromOpacityValue').textContent=`${fromOpacity}%`;$('#gradientToOpacityValue').textContent=`${toOpacity}%`;
+const css=`linear-gradient(${angle}deg, ${gradientStopColor(from,fromOpacity)}, ${gradientStopColor(to,toOpacity)})`;
+preview.style.backgroundImage=css;code.textContent=`background: ${css};`;$('#gradientAngleValue').value=`${angle}°`;$('#gradientAngleValue').textContent=`${angle}°`}
+initializeColorPicker('pcol','pbase');initializeColorPicker('fgPicker','fg');initializeColorPicker('bgPicker','bg');initializeColorPicker('gradientFromPicker','gradientFrom');initializeColorPicker('gradientToPicker','gradientTo');
+$('#gradientFrom').addEventListener('input',event=>{const color=parse(event.target.value);event.target.setAttribute('aria-invalid',String(!color));if(color){updateGradientPicker('from',hex(...color));setRGB(color)}else updateGradient()});
+$('#gradientTo').addEventListener('input',event=>{const color=parse(event.target.value);event.target.setAttribute('aria-invalid',String(!color));if(color){gradientEndMode='custom';updateGradientPicker('to',hex(...color));updateGradient()}else updateGradient()});
+$('#gradientFromOpacity').addEventListener('input',updateGradient);
+$('#gradientToOpacity').addEventListener('input',()=>{gradientEndMode='custom';updateGradient()});
+$('#gradientAngle').addEventListener('input',e=>{gradientAngle=Number(e.target.value);updateGradient()});
+function applyGradientPreset(preset){const base=cur(),[h,s,l]=rgb2hsl(...base),from=hex(...base);$('#gradientFrom').value=from;$('#gradientFromOpacity').value='100';
+if(preset==='fade'){gradientEndMode='fade';$('#gradientTo').value=from;$('#gradientToOpacity').value='0'}
+else{gradientEndMode='complement';$('#gradientTo').value=hex(...hsl2rgb(h+180,s,l));$('#gradientToOpacity').value='100'}
+if(preset==='reset'){$('#gradientAngle').value='110';gradientAngle=110}
+updateGradientPicker('from',$('#gradientFrom').value);updateGradientPicker('to',$('#gradientTo').value);updateGradient()}
+$('#gradientComplement').onclick=()=>applyGradientPreset('complement');
+$('#gradientFade').onclick=()=>applyGradientPreset('fade');
+$('#gradientReset').onclick=()=>applyGradientPreset('reset');
+$('#gradientReverse').onclick=()=>{const from=$('#gradientFrom').value,to=$('#gradientTo').value;if(!parse(from)||!parse(to)){toast('Enter valid hex colors before reversing');return}gradientEndMode='custom';$('#gradientFrom').value=to;$('#gradientTo').value=from;const fromOpacity=$('#gradientFromOpacity').value;$('#gradientFromOpacity').value=$('#gradientToOpacity').value;$('#gradientToOpacity').value=fromOpacity;updateGradientPicker('from',to);updateGradientPicker('to',from);setRGB(parse(to));updateGradient()};
+$('#gradientCopy').onclick=()=>{if(parse($('#gradientFrom').value)&&parse($('#gradientTo').value))copy($('#gradientCode').textContent)};
+updateGradient();
 $('#prand').onclick=()=>$('#rand').click();
 $('#keytoggle').onclick=e=>{const input=$('#gk'),visible=input.type==='text';input.type=visible?'password':'text';e.currentTarget.textContent=visible?'Show':'Hide';e.currentTarget.setAttribute('aria-pressed',String(!visible));input.focus()};
 $('#gm').oninput=()=>$$('#moods button').forEach(b=>b.setAttribute('aria-pressed','false'));
@@ -245,14 +387,14 @@ $('#gm').onkeydown=e=>{if(e.key==='Enter')$('#gb').click()};
 $('#rand').onclick=()=>{H=Math.random()*360;S=40+Math.random()*60;V=55+Math.random()*45;render()};
 $('#copyhex').onclick=()=>copy(hex(...cur()));
 $('#exp').onclick=()=>copy(':root{\n'+harmony().map((c,i)=>`  --color-${i+1}: ${hex(...c)};`).join('\n')+'\n}');
-$('#theme').onclick=()=>{const d=document.documentElement,dark=matchMedia('(prefers-color-scheme:dark)').matches,now=d.dataset.theme||(dark?'dark':'light');d.dataset.theme=now=='dark'?'light':'dark'};
-
 /* routing on plain hash */
-function route(){const h=location.hash.slice(1);view=['picker','palettes','wheel','image','names','contrast'].includes(h)?h:'palettes';
-$$('section[data-s]').forEach(s=>s.hidden=!(s.dataset.s==view||(s.dataset.s=='pal'&&(view=='picker'||view=='wheel'))));
+function route(){const h=location.hash.slice(1);view=h=='wheel'?'picker':['picker','palettes','gradient','image','contrast'].includes(h)?h:'palettes';
+const visibleSection=$$('section[data-s]').find(s=>s.dataset.s==view);
+$$('section[data-s]').forEach(s=>{s.hidden=!(s.dataset.s==view||(s.dataset.s=='pal'&&view=='picker'));s.classList.remove('is-entering')});
+if(visibleSection){void visibleSection.offsetWidth;visibleSection.classList.add('is-entering')}
 $$('nav [data-v]').forEach(b=>b.setAttribute('aria-current',b.dataset.v==view));render()}
 $$('nav [data-v]').forEach(b=>b.onclick=()=>{location.hash=b.dataset.v});
-addEventListener('hashchange',route);route();
+restorePreferences();addEventListener('pagehide',flushColorPreference);addEventListener('hashchange',route);route();requestAnimationFrame(()=>requestAnimationFrame(()=>$('.stage').classList.remove('is-initializing')));
 </script>
 </body>
 </html>
