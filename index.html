@@ -157,6 +157,9 @@ function hsl2rgb(h,s,l){h=((h%360)+360)%360;s/=100;l/=100;const a=s*Math.min(l,1
 function rgb2hsl(r,g,b){const[h,s,v]=rgb2hsv(r,g,b),l=v*(1-s/200);return[h,(l==0||l==100)?0:(v-l)/Math.min(l,100-l)*100,l]}
 const hex=(r,g,b)=>'#'+[r,g,b].map(x=>clamp(Math.round(x),0,255).toString(16).padStart(2,'0')).join('').toUpperCase();
 function parse(t){t=t.trim().replace('#','');if(t.length==3)t=[...t].map(c=>c+c).join('');return /^[0-9a-f]{6}$/i.test(t)?[0,2,4].map(i=>parseInt(t.substr(i,2),16)):null}
+const hexInputSelector='#hin,#pbase,#fg,#bg,#gradientFrom,#gradientTo';
+const isHexPrefix=value=>/^#[0-9a-f]{0,6}$/i.test(value.trim());
+document.addEventListener('input',event=>{const input=event.target;if(!input.matches(hexInputSelector))return;const value=input.value,digits=value.replace(/^#+/,''),normalized='#'+digits;if(normalized!==value){const removed=value.length-digits.length,start=input.selectionStart??value.length,end=input.selectionEnd??value.length;input.value=normalized;input.setSelectionRange(Math.max(1,start-removed+1),Math.max(1,end-removed+1))}},true);
 function oklch(r,g,b){const c=x=>{x/=255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4},R=c(r),G=c(g),B=c(b),
 l=Math.cbrt(.4122214708*R+.5363325363*G+.0514459929*B),m=Math.cbrt(.2119034982*R+.6806995451*G+.1073969566*B),s=Math.cbrt(.0883024619*R+.2817188376*G+.6299787005*B),
 L=.2104542553*l+.793617785*m-.0040720468*s,a=1.9779984951*l-2.428592205*m+.4505937099*s,k=.0259040371*l+.7827717662*m-.808675766*s;
@@ -183,12 +186,12 @@ plane.id=planeId;plane.className='color-picker-plane';plane.setAttribute('role',
 hueLabel.className='color-picker-hue-label';hueLabel.htmlFor=hueId;hueLabel.append('Hue',hueOutput);
 hue.id=hueId;hue.className='color-picker-hue';hue.type='range';hue.min='0';hue.max='360';hue.setAttribute('aria-label',`${input.getAttribute('aria-label')||'Color'} hue`);
 panel.append(plane,hueLabel,hue);host.append(panel);
-const sync=rgb=>{const previousHue=state.hsv[0];state.hsv=rgb2hsv(...rgb);if(state.hsv[0]===0&&previousHue===360)state.hsv[0]=360;if(state.hsv[1]>0)state.lastHue=state.hsv[0];else state.hsv[0]=state.lastHue;const color=hex(...rgb);input.value=color;button.querySelector('span').style.backgroundColor=color;plane.style.backgroundImage=`linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,hsl(${state.hsv[0]} 100% 50%))`;marker.style.left=`${state.hsv[1]}%`;marker.style.top=`${100-state.hsv[2]}%`;hue.value=Math.round(state.hsv[0]);hueOutput.textContent=`${Math.round(state.hsv[0])}°`;plane.setAttribute('aria-valuetext',`Hue ${Math.round(state.hsv[0])} degrees, saturation ${Math.round(state.hsv[1])} percent, brightness ${Math.round(state.hsv[2])} percent`)};
+const sync=rgb=>{const previousHue=state.hsv[0];state.hsv=rgb2hsv(...rgb);if(state.hsv[0]===0&&previousHue===360)state.hsv[0]=360;if(state.hsv[1]>0)state.lastHue=state.hsv[0];else state.hsv[0]=state.lastHue;const color=hex(...rgb);if(document.activeElement!==input)input.value=color;button.querySelector('span').style.backgroundColor=color;plane.style.backgroundImage=`linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,hsl(${state.hsv[0]} 100% 50%))`;marker.style.left=`${state.hsv[1]}%`;marker.style.top=`${100-state.hsv[2]}%`;hue.value=Math.round(state.hsv[0]);hueOutput.textContent=`${Math.round(state.hsv[0])}°`;plane.setAttribute('aria-valuetext',`Hue ${Math.round(state.hsv[0])} degrees, saturation ${Math.round(state.hsv[1])} percent, brightness ${Math.round(state.hsv[2])} percent`)};
 const apply=()=>{sync(hsv2rgb(...state.hsv));input.dispatchEvent(new Event('input',{bubbles:true}))};
 const move=event=>{const bounds=plane.getBoundingClientRect();state.hsv[1]=clamp((event.clientX-bounds.left-plane.clientLeft)/plane.clientWidth*100,0,100);state.hsv[2]=100-clamp((event.clientY-bounds.top-plane.clientTop)/plane.clientHeight*100,0,100);apply()};
 colorPickers.set(buttonId,{button,input,panel,plane,hue,state,sync});
 button.addEventListener('click',()=>{const opening=panel.hidden;closeColorPickers();if(opening){const rgb=parse(input.value);if(rgb)sync(rgb);panel.hidden=false;button.setAttribute('aria-expanded','true');const bounds=host.getBoundingClientRect(),width=Math.min(240,innerWidth-32),offset=Math.max(8-bounds.left,Math.min(0,innerWidth-8-width-bounds.left));panel.style.left=`${offset}px`}});
-input.addEventListener('input',()=>{const rgb=parse(input.value);input.setAttribute('aria-invalid',String(!rgb));if(rgb)sync(rgb)});
+input.addEventListener('input',()=>{const rgb=parse(input.value);input.setAttribute('aria-invalid',String(!isHexPrefix(input.value)));if(rgb)sync(rgb)});
 hue.addEventListener('input',()=>{state.hsv[0]=Number(hue.value);state.lastHue=state.hsv[0];if(state.hsv[1]===0)state.hsv[1]=100;if(state.hsv[2]===0)state.hsv[2]=100;apply()});
 plane.onpointerdown=event=>{plane.setPointerCapture(event.pointerId);move(event)};
 plane.onpointermove=event=>{if(plane.hasPointerCapture(event.pointerId))move(event)};
@@ -215,9 +218,10 @@ $('#lede').textContent=`rgb(${rgb}) · hsl(${Math.round(H===360&&hsl[0]===0?360:
 $('#sv').style.background=`linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,hsl(${H} 100% 50%))`;
 const i=$('#sv i');i.style.left=S+'%';i.style.top=(100-V)+'%';i.style.background=hx;$('#hue').value=H;
 const vs=[['Hex',hx],['RGB',`rgb(${rgb.join(', ')})`],['HSL',`hsl(${Math.round(hsl[0])}, ${Math.round(hsl[1])}%, ${Math.round(hsl[2])}%)`],['OKLCH',`oklch(${ok[0].toFixed(1)}% ${ok[1].toFixed(3)} ${ok[2].toFixed(0)})`],['CSS variable',`--color: ${hx};`]];
-const box=$('#vals');if(!box.dataset.b){box.dataset.b=1;box.innerHTML=`<label class="val in"><span>Type a hex code</span><input id="hin" maxlength="7" aria-label="Hex code"></label>`+vs.map(()=>`<button class="val"><span></span><code></code></button>`).join('')}
+const box=$('#vals');if(!box.dataset.b){box.dataset.b=1;box.innerHTML=`<label class="val in"><span>Type a 3- or 6-digit hex code</span><input id="hin" type="text" minlength="3" maxlength="7" placeholder="#F54927" autocomplete="off" spellcheck="false" aria-label="Hex code"></label>`+vs.map(()=>`<button class="val"><span></span><code></code></button>`).join('')}
 const hin=$('#hin');if(document.activeElement!==hin)hin.value=hx;
-hin.oninput=()=>{const p=parse(hin.value);if(p){[H,S,V]=rgb2hsv(...p);render()}};
+hin.oninput=()=>{const p=parse(hin.value);hin.setAttribute('aria-invalid',String(!isHexPrefix(hin.value)));if(p){[H,S,V]=rgb2hsv(...p);render()}};
+hin.onblur=()=>{if(!parse(hin.value)){hin.value=hex(...cur());hin.setAttribute('aria-invalid','false')}};
 $$('#vals button').forEach((b,k)=>{b.children[0].textContent=vs[k][0];b.children[1].textContent=vs[k][1];b.onclick=()=>copy(vs[k][1])});
 sw($('#hs'),harmony(),'copy');
 const steps=[.1,.2,.3,.4,.5,.6,.7,.8,.9];
@@ -288,7 +292,7 @@ for(const c of top){if(out.every(o=>Math.hypot(o[0]-c[0],o[1]-c[1],o[2]-c[2])>60
 
 /* contrast */
 function contrast(){const fg=$('#fg'),bg=$('#bg'),f=parse(fg.value),g=parse(bg.value),badges=$('#badges'),status=$('#contrastStatus'),preview=$('#ccs');
-for(const input of [fg,bg])input.setAttribute('aria-invalid',String(!parse(input.value)));
+for(const input of [fg,bg])input.setAttribute('aria-invalid',String(!isHexPrefix(input.value)));
 if(!f||!g){$('#ratio').textContent='—';badges.replaceChildren();$('#previewPair').textContent='Enter two valid hex colors';status.textContent='Enter valid 3- or 6-digit hex colors to check contrast';return}
 const foreground=hex(...f),background=hex(...g),r=ratio(f,g);syncColorPicker('fgPicker',foreground);syncColorPicker('bgPicker',background);$('#ratio').textContent=r.toFixed(2)+':1';preview.style.backgroundColor=background;preview.style.color=foreground;$('#previewPair').textContent=`${foreground} on ${background}`;
 const results=[['Body text','AA',4.5],['Body text','AAA',7],['Large text','AA',3],['Large text','AAA',4.5]];badges.replaceChildren();
@@ -321,7 +325,7 @@ copyBtn.onclick=()=>copy(':root{\n'+cols.map(([c,n])=>`  --${String(n||'color').
 function pals(){const[h,s,l]=rgb2hsl(...cur()),pb=$('#pbase'),rgb=cur(),baseHex=hex(...rgb);syncColorPicker('pcol',baseHex);$('#paletteColorPreview').style.backgroundColor=baseHex;$('#paletteColorPreview').style.color=ratio(rgb,[244,242,237])>=4.5?'#f4f2ed':'#15171c';$('#copyBaseColor').textContent=baseHex;$('#baseRgb').textContent=`rgb(${rgb.join(', ')})`;$('#baseHsl').textContent=`hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;if(document.activeElement!==pb)pb.value=baseHex;
 const g=$('#pgrid');g.innerHTML='';STY.forEach(([t,fn],i)=>{const card=pcard(t,fn(h+PJ[0],clamp(s+PJ[1],8,100),l).map(c=>[c,nameFor(c)]));card.style.setProperty('--item-index',i);g.append(card)});
 syncGradientToSelection()}
-$('#pbase').oninput=e=>{const p=parse(e.target.value),status=$('#base-status');if(p){e.target.setAttribute('aria-invalid','false');status.textContent='';status.classList.remove('error');setRGB(p)}else{e.target.setAttribute('aria-invalid','true');status.textContent='Enter a valid 3- or 6-digit hex code';status.classList.add('error')}};
+$('#pbase').oninput=e=>{const input=e.target,p=parse(input.value),status=$('#base-status');if(p){input.setAttribute('aria-invalid','false');status.textContent='';status.classList.remove('error');setRGB(p)}else if(isHexPrefix(input.value)){input.setAttribute('aria-invalid','false');status.textContent='Complete a 3- or 6-digit hex code to apply it';status.classList.remove('error')}else{input.setAttribute('aria-invalid','true');status.textContent='Use 3 or 6 hex digits after #';status.classList.add('error')}};
 $('#pbase').onblur=e=>{if(!parse(e.target.value)){e.target.value=hex(...cur());e.target.setAttribute('aria-invalid','false');$('#base-status').textContent='Try a color code such as #4A90A4';$('#base-status').classList.remove('error')}};
 $('#copyBaseColor').onclick=()=>copy(hex(...cur()));
 $('#pshuf').onclick=()=>{PJ=[(Math.random()-.5)*30,(Math.random()-.5)*24];pals()};
@@ -348,21 +352,21 @@ finally{clearTimeout(timeout);button.disabled=false}};
 /* palette color controls */
 let gradientAngle=110,gradientEndMode='complement';
 function updateGradientPicker(which,color){syncColorPicker(`gradient${which==='from'?'From':'To'}Picker`,color)}
-function updateGradientStart(color){const from=$('#gradientFrom');if(!from)return;from.value=color;updateGradientPicker('from',color)}
+function updateGradientStart(color){const from=$('#gradientFrom');if(!from)return;if(document.activeElement!==from)from.value=color;updateGradientPicker('from',color)}
 function syncGradientToSelection(){const[h,s,l]=rgb2hsl(...cur()),color=hex(...cur());updateGradientStart(color);
 if(gradientEndMode==='complement'){const end=hex(...hsl2rgb(h+180,s,l));$('#gradientTo').value=end;$('#gradientToOpacity').value='100';updateGradientPicker('to',end)}
 else if(gradientEndMode==='fade'){$('#gradientTo').value=color;$('#gradientToOpacity').value='0';updateGradientPicker('to',color)}
 updateGradient()}
 function gradientStopColor(rgb,opacity){return`rgba(${rgb.join(', ')}, ${(Number(opacity)/100).toFixed(2).replace(/0+$/,'').replace(/\.$/,'')})`}
 function updateGradient(){const from=parse($('#gradientFrom').value),to=parse($('#gradientTo').value),angle=$('#gradientAngle').value,preview=$('#gradientPreview'),code=$('#gradientCode'),fromOpacity=$('#gradientFromOpacity').value,toOpacity=$('#gradientToOpacity').value;
-$('#gradientFrom').setAttribute('aria-invalid',String(!from));$('#gradientTo').setAttribute('aria-invalid',String(!to));
+$('#gradientFrom').setAttribute('aria-invalid',String(!isHexPrefix($('#gradientFrom').value)));$('#gradientTo').setAttribute('aria-invalid',String(!isHexPrefix($('#gradientTo').value)));
 if(!from||!to)return;
 $('#gradientFromOpacityValue').textContent=`${fromOpacity}%`;$('#gradientToOpacityValue').textContent=`${toOpacity}%`;
 const css=`linear-gradient(${angle}deg, ${gradientStopColor(from,fromOpacity)}, ${gradientStopColor(to,toOpacity)})`;
 preview.style.backgroundImage=css;code.textContent=`background: ${css};`;$('#gradientAngleValue').value=`${angle}°`;$('#gradientAngleValue').textContent=`${angle}°`}
 initializeColorPicker('pcol','pbase');initializeColorPicker('fgPicker','fg');initializeColorPicker('bgPicker','bg');initializeColorPicker('gradientFromPicker','gradientFrom');initializeColorPicker('gradientToPicker','gradientTo');
-$('#gradientFrom').addEventListener('input',event=>{const color=parse(event.target.value);event.target.setAttribute('aria-invalid',String(!color));if(color){updateGradientPicker('from',hex(...color));setRGB(color)}else updateGradient()});
-$('#gradientTo').addEventListener('input',event=>{const color=parse(event.target.value);event.target.setAttribute('aria-invalid',String(!color));if(color){gradientEndMode='custom';updateGradientPicker('to',hex(...color));updateGradient()}else updateGradient()});
+$('#gradientFrom').addEventListener('input',event=>{const color=parse(event.target.value);event.target.setAttribute('aria-invalid',String(!isHexPrefix(event.target.value)));if(color){updateGradientPicker('from',hex(...color));setRGB(color)}else updateGradient()});
+$('#gradientTo').addEventListener('input',event=>{const color=parse(event.target.value);event.target.setAttribute('aria-invalid',String(!isHexPrefix(event.target.value)));if(color){gradientEndMode='custom';updateGradientPicker('to',hex(...color));updateGradient()}else updateGradient()});
 $('#gradientFromOpacity').addEventListener('input',updateGradient);
 $('#gradientToOpacity').addEventListener('input',()=>{gradientEndMode='custom';updateGradient()});
 $('#gradientAngle').addEventListener('input',e=>{gradientAngle=Number(e.target.value);updateGradient()});
